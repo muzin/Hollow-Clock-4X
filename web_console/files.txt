@@ -1,0 +1,8 @@
+/index.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/index.html
+/init.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/init.html
+/spiffs.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/spiffs.html
+/css/boostrap.min.css http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/css/boostrap.min.css
+/js/boostrap.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/boostrap.min.js
+/js/jquery.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/jquery.min.js
+
+

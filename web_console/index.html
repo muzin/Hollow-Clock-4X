@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>Hollow Clock 4X</title>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+
+
+    <style type="text/css">
+        .clock_console_warpper {
+            /*padding:5px;*/
+        }
+        .clock_console_title {
+            /*background-color: #2663f6;*/
+            background-color: #6540f0;
+            color: #fff;
+            width:100%;
+            height: 60px;
+            font-size: 23px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0px;
+        }
+        .clock_console_title > span {
+            color: #fff;
+        }
+
+        .clock_console_items{
+            display: flex;
+            height: 100%;
+            width: 100%;
+            flex-direction: column;
+            margin-top: 60px;
+        }
+
+        .item_title {
+            background: #eee;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            padding-left: 5px;
+            font-weight: bold;
+        }
+
+        .wifi_ssid_wrapper, .wifi_pwd_wrapper{
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: 10px 10px;
+        }
+
+        .item_title_name{
+            padding: 0px 10px;
+            width: 33%;
+        }
+
+        .wifi_ssid_select{
+            display: flex;
+            width: 50%;
+        }
+
+        .wifi_ssid_val {
+            width: 67.77777%;
+        }
+        .set_clock_time_btn_wrapper{
+            display: flex;
+            justify-content: center;
+            height: 80px;
+            align-items: center;
+        }
+
+        .wifi_ssid_refresh {
+            height: 34px;
+            margin-left: 10px;
+            font-size: 14px;
+            width: 30% !important;
+        }
+
+
+        .update_wifi_btn_wrapper {
+            display: none;
+        }
+
+        .clock_btn {
+            width: 40%;
+            text-align: center;
+            background: #6540f0;
+            color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .clock_btn:active {
+            color: #fff;
+        }
+        .clock_btn:hover, .clock_btn:focus-within {
+            color: #fff;
+            text-decoration-line: none;
+        }
+
+        .tip {
+            color:#aaa;width:100%; padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="clock_console_warpper">
+
+    <div class="clock_console_title">
+        <span> Hollow Clock 4X </span>
+    </div>
+
+
+    <div class="clock_console_items">
+
+        <div class="clock_console_item">
+            <div class="item_title">
+                <span>Wi-Fi设置</span>
+            </div>
+
+            <div class="wifi_ssid_wrapper">
+                <div class="wifi_ssid_title item_title_name">
+                    Wi-Fi SSID
+                </div>
+                <div class="wifi_ssid_select" style="width: 67.777777%;">
+                    <select class="wifi_ssid_val wifi_ssid_list form-control" placeholder="请选择Wi-Fi的SSID">
+                        <option val="">无Wi-Fi</option>
+                    </select>
+                    <a class="clock_btn wifi_ssid_refresh" style="padding: 8px;">刷新</a>
+                </div>
+
+<!--                <div class="wifi_ssid_selected" style="width: 67.777777%;">-->
+<!--                    <span class="wifi_ssid_name">CMCC-adfk </span>-->
+<!--                    (-->
+<!--                    <span class="wifi_ssid_status" style="color:#5fcd73;">-->
+<!--                        已连接-->
+<!--                    </span>-->
+<!--                    )-->
+<!--                </div>-->
+            </div>
+
+            <div class="wifi_pwd_wrapper">
+                <div class="wifi_pwd_title  item_title_name">
+                    Wi-Fi 密码
+                </div>
+                <div class="wifi_ssid_val">
+                    <input class="form-control" type="text" placeholder="请输入Wi-Fi密码"/>
+                </div>
+            </div>
+
+            <div class="set_clock_time_btn_wrapper update_wifi_btn_wrapper" >
+                <a class="update_wifi_btn clock_btn" href="javascript:void(0);">
+                    连接/更换Wi-Fi
+                </a>
+            </div>
+
+        </div>
+
+        <div class="clock_console_item">
+            <div class="item_title">
+                <span>时间设置</span>
+            </div>
+
+            <div class="wifi_ssid_wrapper">
+                <div class="wifi_ssid_title item_title_name">
+                    时钟时间
+                </div>
+                <div class="wifi_ssid_select clock_time">
+                    2023-01-01 00:00:00
+                </div>
+            </div>
+
+            <div class="wifi_pwd_wrapper">
+                <div class="wifi_pwd_title item_title_name">
+                    浏览器时间
+                </div>
+
+                <div class="wifi_ssid_val" style="display: flex; align-items: center;">
+                    <div class="browser_time">
+                        2023-01-01 00:00:00
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="tip">
+                使用浏览器时间，时钟重启后需要重新设置。请连接Wi-Fi，自动获取网络时间，以获取最佳体验。
+            </div>
+
+
+            <div class="set_clock_time_btn_wrapper">
+                <a class="set_network_clock_time_btn clock_btn" style="margin-left: 10px; height: 34px; padding: 8px;" href="javascript:void(0);">
+                    使用网络时间
+                </a>
+                <a class="set_browser_clock_time_btn clock_btn" style="margin-left: 10px; height: 34px; padding: 8px;" href="javascript:void(0);">
+                    使用浏览器时间
+                </a>
+            </div>
+
+        </div>
+
+
+        <div class="clock_console_item">
+            <div class="item_title">
+                <span>高级设置</span>
+            </div>
+
+            <div class="wifi_ssid_wrapper">
+                <div class="wifi_ssid_title item_title_name">
+                    Wi-Fi AP 名称
+                </div>
+                <div class="wifi_ssid_val">
+                    <input class="wifi_ap_name_val form-control"  type="text" placeholder="请输入AP名称"/>
+                </div>
+            </div>
+
+            <div class="wifi_pwd_wrapper">
+                <div class="wifi_pwd_title item_title_name">
+                    Wi-Fi AP 密码
+                </div>
+                <div class="wifi_ssid_val">
+                    <input class="wifi_ap_pwd_val form-control"  type="text" placeholder="请输入AP密码"/>
+                </div>
+            </div>
+
+            <div class="tip">
+                AP指的是管理时钟的无线网络。
+            </div>
+
+
+            <div class="wifi_pwd_wrapper">
+                <div class="wifi_pwd_title item_title_name">
+                    时钟模式
+                </div>
+
+                <div class="wifi_ssid_val" style="display: flex; align-items: center;">
+                    <select class="wifi_ssid_list form-control" placeholder="请选择时钟模式">
+                        <option value="0" selected>秒模式</option>
+                        <option value="1">分模式</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="tip">
+                秒模式：一次走一秒钟的距离<br/>分模式：一次走一分钟的距离
+            </div>
+
+            <div class="wifi_pwd_wrapper">
+                <div class="wifi_pwd_title item_title_name">
+                    时区
+                </div>
+
+                <div class="wifi_ssid_val" style="display: flex; align-items: center;">
+                    <select class="wifi_ssid_list form-control" placeholder="请选择时钟模式">
+                        <option value="0">UTC</option>
+                        <option value="1">UTC+1（东一区）</option>
+                        <option value="2">UTC+2（东二区）</option>
+                        <option value="3">UTC+3（东三区）</option>
+                        <option value="4">UTC+4（东四区）</option>
+                        <option value="5">UTC+5（东五区）</option>
+                        <option value="6">UTC+6（东六区）</option>
+                        <option value="7">UTC+7（东七区）</option>
+                        <option value="8" selected>UTC+8（东八区）</option>
+                        <option value="9">UTC+9（东九区）</option>
+                        <option value="10">UTC+10（东十区）</option>
+                        <option value="11">UTC+11（东十一区）</option>
+                        <option value="0">UTC+12（东西十二区）</option>
+                        <option value="1">UTC-11（西十一区）</option>
+                        <option value="2">UTC-10（西十区）</option>
+                        <option value="3">UTC-9（西九区）</option>
+                        <option value="4">UTC-8（西八区）</option>
+                        <option value="5">UTC-7（西七区）</option>
+                        <option value="6">UTC-6（西六区）</option>
+                        <option value="7">UTC-5（西五区）</option>
+                        <option value="8">UTC-4（西四区）</option>
+                        <option value="9">UTC-3（西三区）</option>
+                        <option value="10">UTC-2（西二区）</option>
+                        <option value="11">UTC-1（西一区）</option>
+                    </select>
+                </div>
+
+            </div>
+
+
+            <div class="set_clock_time_btn_wrapper">
+                <a class="save_setting_btn clock_btn" href="javascript:void(0);">
+                    提交
+                </a>
+            </div>
+
+        </div>
+
+
+        <div class="clock_console_item">
+            <div class="item_title">
+                <span>固件升级</span>
+            </div>
+
+            <div class="wifi_ssid_wrapper">
+                <div class="wifi_ssid_title item_title_name">
+                    版本
+                </div>
+                <div class="firmware_val">
+                   _
+                </div>
+            </div>
+
+            <div class="set_clock_time_btn_wrapper">
+                <a class="upgrade_btn clock_btn" href="javascript:void(0);">
+                    检查更新
+                </a>
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+<script src="./js/jquery.min.js"></script>
+<!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+<script src="./js/bootstrap.min.js"></script>
+
+<script type="application/javascript">
+
+    $(document).ready(function(){
+
+        $(".upgrade_btn").click(function(){
+            alert("不支持固件升级");
+        })
+
+        setInterval(function(){
+            var datetime_str = formatDate(new Date(), "yyyy-MM-dd hh:mm:ss");
+            $(".browser_time").text(datetime_str);
+        }, 1000);
+
+    });
+
+    // 获取 wifi 列表
+    function get_wifi_list(){
+        $.post("./api/get_wifi_list", {}, function(result){
+            if(result.code == 0){
+                var wifi_list  = result.data;
+                $(".wifi_ssid_list").html("");
+                for(var i = 0; i < wifi_list.length; i++){
+                    var wifi_item = wifi_list[i];
+                    $(".wifi_ssid_list").append(`<option val="${wifi_item.name}" ${wifi_item.checked ? "checked" : ""}>${wifi_item.name}</option>`)
+                }
+            }else{
+                alert(result.msg);
+            }
+        });
+    }
+
+    // 获取 设备 信息
+    function get_device_info(){
+        $.post("./api/get_device_info", {}, function(result){
+            if(result.code == 0){
+                var wifi_ap_info  = result.data;
+                $(".wifi_ap_name_val").value(wifi_ap_info.name);
+                $(".wifi_ap_pwd_val").value(wifi_ap_info.pwd);
+            }else{
+                alert(result.msg);
+            }
+        });
+    }
+
+    // 保存 设置 信息
+    function save_setting_info(data){
+        $.post("./api/save_setting_info", data, function(result){
+            if(result.code == 0){
+                var wifi_ap_info  = result.data;
+                $(".wifi_ap_name_val").value(wifi_ap_info.name);
+                $(".wifi_ap_pwd_val").value(wifi_ap_info.pwd);
+            }else{
+                alert(result.msg);
+            }
+        });
+    }
+
+    // 设置 时间
+    function save_setting_info(data){
+        $.post("./api/save_setting_info", data, function(result){
+            if(result.code == 0){
+                var wifi_ap_info  = result.data;
+                $(".wifi_ap_name_val").value(wifi_ap_info.name);
+                $(".wifi_ap_pwd_val").value(wifi_ap_info.pwd);
+            }else{
+                alert(result.msg);
+            }
+        });
+    }
+
+
+    function check_upgrade(){
+        $.post("./api/check_upgrade", data, function(result){
+            if(result.code == 0){
+                var wifi_ap_info  = result.data;
+                $(".wifi_ap_name_val").value(wifi_ap_info.name);
+                $(".wifi_ap_pwd_val").value(wifi_ap_info.pwd);
+            }else{
+                alert(result.msg);
+            }
+        });
+    }
+
+    function check_upgrade(){
+        $.post("./api/check_upgrade", data, function(result){
+            if(result.code == 0){
+                var wifi_ap_info  = result.data;
+                $(".wifi_ap_name_val").value(wifi_ap_info.name);
+                $(".wifi_ap_pwd_val").value(wifi_ap_info.pwd);
+            }else{
+                alert(result.msg);
+            }
+        });
+    }
+
+
+    function formatDate(date, format){
+        var d = null;
+
+        if(typeof date == 'string'){
+            try {
+                d = new Date(date);
+                if(d.toString() == 'Invalid Date'){
+                    throw 'datetime is Invalid Date';
+                }
+            }catch(e){
+                console.error(e);
+                d = null;
+            }
+        }else if(date instanceof Date){
+            d = date;
+        }else{
+        }
+
+        if(d == null){
+            return '';
+        }
+
+        var _year = d.getFullYear();
+        var _month = d.getMonth() + 1;
+        var _date = d.getDate();
+
+        var _day = d.getDay();
+
+        var _hours = d.getHours();
+        var _minutes = d.getMinutes();
+        var _seconds = d.getSeconds();
+        var _mseconds = d.getMilliseconds();
+
+        var formatClone = format;
+        return formatClone
+            .replace(/yyyy/g, _year)
+            .replace(/MM/g, _month > 9 ? _month : '0' + _month)
+            .replace(/dd/g, _date > 9 ? _date : '0' + _date)
+            .replace(/hh/g, _hours > 9 ? _hours : '0' + _hours)
+            .replace(/mm/g, _minutes > 9 ? _minutes : '0' + _minutes)
+            .replace(/ss/g, _seconds > 9 ? _seconds : '0' + _seconds)
+            .replace(/ms/g, _mseconds > 9
+                ? _mseconds > 99
+                    ? _mseconds
+                    : '0' + _mseconds
+                : '00' + _mseconds);
+    }
+
+</script>
+</body>
+</html>
