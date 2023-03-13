@@ -1,0 +1,18 @@
+{
+  "code": 0,
+  "msg": "SUCCESS",
+  "list":[
+    {
+      "version": 10102,
+      "new": true,
+      "url": "https://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/firmware/upgrade/1.1.2/hollow_clock.bin",
+      "desc": "10102 新功能"
+    },
+    {
+      "version": 10101,
+      "new": false,
+      "url": "https://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/firmware/upgrade/1.1.2/hollow_clock.bin",
+      "desc": "10101 新功能"
+    }
+  ]
+}

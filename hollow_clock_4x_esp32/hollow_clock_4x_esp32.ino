@@ -110,6 +110,14 @@
 // static const uint8_t D14  = 4;
 // static const uint8_t D15  = 5;
 
+uint32_t get_esp_chipid() {
+  uint32_t chipId = 0;
+  for(int i=0; i<17; i=i+8) {
+	  chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+	}
+  return chipId;
+}
+
 // =========================================
 // define global variables
 // =========================================
@@ -151,8 +159,11 @@ volatile unsigned long current_millis;
 
 
 //设置需要连接的wifi的名称和密码
-const char *ssid = "ChinaNet-KmSz";
-const char *password ="19910529575";
+String wifi_ssid = "";
+String wifi_pwd = "";
+
+String wifi_ap_name = WIFI_AP_NAME + String(get_esp_chipid());
+String wifi_ap_passwd = WIFI_AP_PASSWD;
 
 // 是否正在播放音频 default: false
 volatile bool audio_is_running = false;
@@ -189,6 +200,7 @@ volatile bool ntp_allow_update_flag = false;
 
 // wifi是否已连接
 volatile bool wifi_connected_notify = false;
+volatile int wifi_conneccted_notify_num = 0;
 
 // 时钟模式 
 // 0: 秒模式 一次走一秒钟的距离
@@ -203,6 +215,8 @@ volatile bool proof_time_inited = false;
 volatile bool proof_time_running = false;
 
 volatile bool clock_is_12_hour = IS_12_HOUR_DEFAULT_VAL;
+
+volatile unsigned long birthday = -1;
 
 // 报时 mp3
 String spk_time_list[] = {
@@ -1202,6 +1216,9 @@ void timer_1000ms_handler(){
   // 处理 报时 时间检查
   chime_time_check_handler();
 
+  // 处理 生日 时 唱 生日歌
+  birthday_handler();
+
   // 处理 闹钟 任务
   if(bellManager != NULL){
     bellManager->bell_handler();
@@ -1268,6 +1285,8 @@ void timer_check_wifi_connect_status(){
   //如果wifi连接成功，WiFi.status()返回值则为，WL_CONNECTED
   if (WiFi.status() == WL_CONNECTED && !wifi_connected_notify){
     wifi_connected_notify = true;
+    wifi_conneccted_notify_num++;
+
     wifi_connect_success_notify();
   }
 
@@ -1281,12 +1300,14 @@ void wifi_connect_success_notify() {
   //当连接成功之后，向串口输出开发板的ip地址
   Serial_Loginfo(WiFi.localIP().toString());
 
+  // 只有 第一次连接网络时 开始校时
+  if(wifi_conneccted_notify_num == 1){
+    // 开始 校时
+    start_proof_time();
 
-  // 开始 校时
-  start_proof_time();
-
-  // 获取 网络时间
-  get_network_time_after_wifi_connect();
+    // 获取 网络时间
+    get_network_time_after_wifi_connect();
+  }
 
   // 初始化 OTA
   // setup_arduino_ota();
@@ -1344,43 +1365,77 @@ void get_network_time_handler() {
 
 }
 
-int get_year_from_current_timestamp(){
-  struct tm *ptm = gmtime((time_t *)&current_timestamp);
+int get_year_from_timestamp(time_t * timestamp){
+  struct tm *ptm = gmtime(timestamp);
   return ptm->tm_year + 1900;
 }
-int get_month_from_current_timestamp(){
-  struct tm *ptm = gmtime((time_t *)&current_timestamp);
+int get_month_from_timestamp(time_t * timestamp){
+  struct tm *ptm = gmtime(timestamp);
   return ptm->tm_mon + 1;
 }
-int get_month_day_from_current_timestamp(){
-  struct tm *ptm = gmtime((time_t *)&current_timestamp);
+int get_month_day_from_timestamp(time_t * timestamp){
+  struct tm *ptm = gmtime(timestamp);
   return ptm->tm_mday;
+}
+int get_hour_from_timestamp(time_t * timestamp){
+  struct tm *ptm = gmtime(timestamp);
+  return ptm->tm_hour;
+}
+int get_minute_from_timestamp(time_t * timestamp){
+  struct tm *ptm = gmtime(timestamp);
+  return ptm->tm_min;
+}
+int get_second_from_timestamp(time_t * timestamp){
+  struct tm *ptm = gmtime(timestamp);
+  return ptm->tm_sec;
+}
+int get_week_from_timestamp(time_t * timestamp){
+  struct tm *ptm = gmtime(timestamp);
+  return ptm->tm_wday;
+}
+
+String get_format_datetime_from_timestamp(time_t * timestamp){
+  int year = get_year_from_timestamp(timestamp);
+  int month = get_month_from_timestamp(timestamp);
+  int month_day = get_month_day_from_timestamp(timestamp);
+  int hour = get_hour_from_timestamp(timestamp);
+  int minutes = get_minute_from_timestamp(timestamp);
+  int seconds = get_second_from_timestamp(timestamp);
+  return String(year) + "-" 
+    + (month < 10 ? "0" : "") + String(month) + "-" 
+    + (month_day < 10 ? "0" : "") + String(month_day) + " "
+    + (hour < 10 ? "0" : "") + String(hour) + ":" 
+    + (minutes < 10 ? "0" : "") + String(minutes) + ":" 
+    + (seconds < 10 ? "0" : "") + String(seconds);
+}
+
+int get_year_from_current_timestamp(){
+  return get_year_from_timestamp((time_t *)&current_timestamp);
+}
+int get_month_from_current_timestamp(){
+  return get_month_from_timestamp((time_t *)&current_timestamp);
+}
+int get_month_day_from_current_timestamp(){
+  return get_month_day_from_timestamp((time_t *)&current_timestamp);
 }
 
 int get_hours_from_current_timestamp(){
-  struct tm *ptm = gmtime((time_t *)&current_timestamp);
-  return ptm->tm_hour;
-  // return timeClient.getHours(); 
+  return get_hour_from_timestamp((time_t *)&current_timestamp);
 }
 
 int get_minutes_from_current_timestamp(){
-  struct tm *ptm = gmtime((time_t *)&current_timestamp);
-  return ptm->tm_min;
-  // return timeClient.getMinutes(); 
+  return get_minute_from_timestamp((time_t *)&current_timestamp);
 }
 
 int get_seconds_from_current_timestamp(){
-  struct tm *ptm = gmtime((time_t *)&current_timestamp);
-  return ptm->tm_sec;
-  //  return timeClient.getSeconds(); 
+  return get_second_from_timestamp((time_t *)&current_timestamp);
 }
+
+
 
 String get_format_datetime_from_current_timestamp(){
-  return String(get_year_from_current_timestamp()) + "-" + String(get_month_from_current_timestamp()) + "-" + String(get_month_day_from_current_timestamp()) + " "
-    + String(get_hours_from_current_timestamp()) + ":" + String(get_minutes_from_current_timestamp()) + ":" + String(get_seconds_from_current_timestamp());
+  return get_format_datetime_from_timestamp((time_t *)&current_timestamp);
 }
-
-
 
 
 
@@ -1397,11 +1452,44 @@ void setup_init_variables(){
   stop_btn_lock = current_millis;
   hour_in_lock = current_millis;
   minute_in_lock = current_millis;
+
+
+  // 是否正在播放音频 default: false
+  audio_is_running = false;
+
+  // 是否正在校对时间 default: false
+  prood_time_is_runnning = false;
+
+  // 6点触发中断 锁 记录上次触发时间
+  hour_in_lock = 0;
+
+  // 整点触发中断 锁 记录上次触发时间
+  minute_in_lock = 0;
+
+  // 停止按钮中断 锁 记录上次触发时间
+  stop_btn_lock = 0;
+
+  // 6点触发中断 是否激活
+  hour_in_enable = 0;
+  minute_in_enable = 0;
+
+  ntp_inited = true;
+  // 时间允许获取 flag
+  ntp_allow_update_flag = false;
+
+  // wifi是否已连接
+  wifi_connected_notify = false;
+  wifi_conneccted_notify_num = 0;
+
+  WiFi.disconnect(true, true);
+  WiFi.enableSTA(true);
+  WiFi.enableAP(true);
+  WiFi.mode(WIFI_MODE_APSTA);
+
 }
 
 // 初始化 定时器
 void setup_timer(){
-
   Serial_Loginfo("Init 定时器");
 
   ticker1ms.attach_ms(1, timer_1ms_handler);
@@ -1411,9 +1499,7 @@ void setup_timer(){
   ticker60000ms.attach_ms(60000, timer_60000ms_handler);
   ticker300000ms.attach_ms(300000, timer_300000ms_handler); 
   
-
   Serial_Loginfo("Init 定时器 finish");
-  
 }
 
 
@@ -1684,17 +1770,109 @@ void setup_spiffs(){
     Serial_Loginfo("[SPIFFS] mount failed");
   }
 
-  Serial_Loginfo("[SPIFFS] totalBytes\t\t" + String(SPIFFS.totalBytes()));
+  Serial_Loginfo("[SPIFFS] totalBytes\t" + String(SPIFFS.totalBytes()));
   Serial_Loginfo("[SPIFFS] usedBytes\t\t" + String(SPIFFS.usedBytes()));
 
 }
 
-uint32_t get_esp_chipid() {
-  uint32_t chipId = 0;
-  for(int i=0; i<17; i=i+8) {
-	  chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
-	}
-  return chipId;
+void setup_spiffs_config(){
+  Serial_Loginfo("Init SPIFFS Config Info");
+
+  String _wifi_ssid = get_sys_value_to_spiffs("wifi_ssid");
+  String _wifi_pwd = get_sys_value_to_spiffs("wifi_pwd");
+  String _wifi_ap_name = get_sys_value_to_spiffs("wifi_ap_name");
+  String _wifi_ap_passwd = get_sys_value_to_spiffs("wifi_ap_passwd");
+  String _clock_mode = get_sys_value_to_spiffs("clock_mode");
+  String _clock_is_12_hour = get_sys_value_to_spiffs("clock_is_12_hour");
+  String _time_zone = get_sys_value_to_spiffs("time_zone");
+  String _birthday = get_sys_value_to_spiffs("birthday");
+  String _gain = get_sys_value_to_spiffs("gain");
+
+
+  Serial_Loginfo(String("[SPIFFS Config] wifi_ssid: ") + _wifi_ssid);
+  Serial_Loginfo(String("[SPIFFS Config] wifi_pwd: ") + _wifi_pwd);
+  Serial_Loginfo(String("[SPIFFS Config] wifi_ap_name: ") + _wifi_ap_name);
+  Serial_Loginfo(String("[SPIFFS Config] wifi_ap_passwd: ") + _wifi_ap_passwd);
+  Serial_Loginfo(String("[SPIFFS Config] clock_mode: ") + _clock_mode);
+  Serial_Loginfo(String("[SPIFFS Config] clock_is_12_hour: ") + _clock_is_12_hour);
+  Serial_Loginfo(String("[SPIFFS Config] time_zone: ") + _time_zone);
+  Serial_Loginfo(String("[SPIFFS Config] birthday: ") + _birthday);
+  Serial_Loginfo(String("[SPIFFS Config] gain: ") + _gain);
+
+  if(_wifi_ap_name.length() > 0){
+    wifi_ap_name = _wifi_ap_name;
+  }
+  if(_wifi_ap_passwd.length() > 0){
+    wifi_ap_passwd = _wifi_ap_passwd;
+  }
+ 
+  if(_wifi_ssid.length() > 0){
+    wifi_ssid = _wifi_ssid;
+  }
+  if(_wifi_pwd.length() > 0){
+    wifi_pwd = _wifi_pwd;
+  }
+  
+  if(_clock_mode.length() > 0){
+    clock_mode = _clock_mode.toInt();    
+  }
+
+  if(_clock_is_12_hour.length() > 0){
+    clock_is_12_hour = _clock_is_12_hour.toInt();
+  }
+
+  if(_time_zone.length() > 0){
+     time_zone = _time_zone.toInt();
+  }
+  
+  if(_birthday.length() > 0){
+    birthday = (unsigned long) atol(_birthday.c_str());
+  }
+
+  if(_gain.length() > 0){
+    i2s_gain = _gain.toFloat();
+  }
+
+}
+
+void clear_sys_value_to_spiffs(){
+  remove_sys_value_to_spiffs("wifi_ssid");
+  remove_sys_value_to_spiffs("wifi_pwd");
+  remove_sys_value_to_spiffs("wifi_ap_name");
+  remove_sys_value_to_spiffs("wifi_ap_passwd");
+  remove_sys_value_to_spiffs("clock_mode");
+  remove_sys_value_to_spiffs("clock_is_12_hour");
+  remove_sys_value_to_spiffs("time_zone");
+  remove_sys_value_to_spiffs("birthday");
+}
+
+void set_sys_value_to_spiffs(String name, String val){
+  String prefix = "/sys/";
+  File file = SPIFFS.open(prefix + name, "w");
+  file.write((uint8_t *)val.c_str(), val.length());
+  file.flush();
+  file.close();
+}
+
+String get_sys_value_to_spiffs(String name){
+  String prefix = "/sys/";
+  if(!SPIFFS.exists(prefix + name)){
+    return "";
+  }
+  File file = SPIFFS.open(prefix + name, "r");
+  String str = file.readString();
+  file.close();
+  return str;
+}
+
+bool remove_sys_value_to_spiffs(String name){
+  String prefix = "/sys/";
+  if(SPIFFS.exists(prefix + name)){
+    SPIFFS.remove(prefix + name);
+    return true;
+  }else{
+    return false;
+  }
 }
 
 // 初始化 wifi ap
@@ -1708,22 +1886,22 @@ void setup_wifi_ap(){
   WiFi.softAPConfig(softLocal, softGateway, softSubnet);
 
   // 2 设置WIFI名称
-  String apName = (WIFI_AP_NAME + String(get_esp_chipid()));  
-  const char *softAPName = apName.c_str();
+  const char *softAPName = wifi_ap_name.c_str();
  
   // 3创建wifi  名称 +密码 如果没有密码不设置
-  #ifdef WIFI_AP_PASSWD
-  WiFi.softAP(softAPName, WIFI_AP_PASSWD);     
-  #else
-  WiFi.softAP(softAPName);     
-  #endif
+  if(wifi_ap_passwd.length() > 0){
+    WiFi.softAP(softAPName, wifi_ap_passwd.c_str());     
+  }else{
+    WiFi.softAP(softAPName);    
+  }
+       
   // 4输出创建的WIFI IP地址
   IPAddress myIP = WiFi.softAPIP();  
 
   // 5输出WIFI 名称
   Serial_Loginfo("[Wi-Fi] softAPName: ");  
-  Serial_Loginfo(apName);
-  Serial_Loginfo("AP IP address: ");
+  Serial_Loginfo(softAPName);
+  Serial_Loginfo("[Wi-Fi] AP IP address: ");
   Serial_Loginfo(myIP.toString());
 
   Serial_Loginfo("Init Wi-Fi AP Finish");
@@ -1773,7 +1951,7 @@ void httpd_handler_init_html(){
 
   httpd_server.send(200, 
   "text/html", 
-  "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Clock Init</title><meta charset=\"utf-8\"><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1\"></head><body><textarea class=\"init_text_input\"style=\"width: 100%;height: 200px;\"value=\"\"></textarea><div class=\"submit\">提交</div><script type=\"application/javascript\">document.onreadystatechange=function(){document.querySelector(\".submit\").onclick=async function(){var val=document.querySelector(\".init_text_input\").value;var val_items=val.trim().split(\"\n\");for(var i=0;i<val_items.length;i++){var val_item=val_items[i].trim();var val_arr=val_item.split(\" \");var val_path=val_arr[0].trim();var val_url=val_arr[1].trim();var resp=await fetch('./api/init_file_upload?path='+val_path+'&url='+val_url,{method:'get',headers:{'Content-Type':'text/plain'}}).then((res)=>res.text());console.log(resp)}}}</script></body></html>"
+  "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Clock Init</title><meta charset=\"utf-8\"><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1\"></head><body><textarea class=\"init_text_input\"style=\"width: 100%;height: 200px;\"value=\"\"></textarea><div class=\"submit\">提交</div><br/><br/><br/><textarea class=\"delete_spiffs_text_input\"style=\"width: 100%;height: 200px;\"value=\"\"></textarea><div class=\"delete_spiffs_submit\">删除SPIFFS内容</div><br/><br/><br/><div class=\"clear_sys_val\">清理系统变量</div><script type=\"application/javascript\">document.onreadystatechange=function(){document.querySelector(\".submit\").onclick=async function(){var val=document.querySelector(\".init_text_input\").value;var val_items=val.trim().split(\"\n\");for(var i=0;i<val_items.length;i++){var val_item=val_items[i].trim();if(val_item.length==0){continue}var val_arr=val_item.split(\" \");var val_path=val_arr[0].trim();var val_url=val_arr[1].trim();var resp=await fetch('./api/init_file_upload?path='+val_path+'&url='+val_url,{method:'get',headers:{'Content-Type':'text/plain'}}).then((res)=>res.text());console.log(resp)}};document.querySelector(\".delete_spiffs_submit\").onclick=async function(){var val=document.querySelector(\".delete_spiffs_text_input\").value;var resp=await fetch('./api/delete_spiffs_path?path='+val,{method:'get',headers:{'Content-Type':'text/plain'}}).then((res)=>res.text());alert(resp)};document.querySelector(\".clear_sys_val\").onclick=async function(){var resp=await fetch('./api/clear_sys_val',{method:'get',headers:{'Content-Type':'text/plain'}}).then((res)=>res.text());alert(resp)}}</script></body></html>"
   );
 }
 
@@ -1814,9 +1992,10 @@ void httpd_handler_init_file_upload(){
       Serial_Logdebug("file availableForWrite " + String(file.availableForWrite()));
       Serial_Logdebug("transfer Total Bytes: " + String(stream_size));
 
-      uint8_t buf[512];
+      int buf_size = 1024;
+      uint8_t buf[buf_size];
       int len = -1;
-      while((len = stream.readBytes(buf, 128)) > 0){
+      while((len = stream.readBytes(buf, buf_size)) > 0){
         file.write(buf, len);
       }
       file.flush();
@@ -1842,6 +2021,314 @@ void httpd_handler_init_file_upload(){
   httpd_server.send(200, "text/plain", resp_str);
 
 }
+
+void httpd_handler_device_info(){
+
+  Serial_Logdebug("[httpd] /api/device_info 200");
+
+  httpd_set_header_cros();
+
+  httpd_server.send(
+    200, 
+    "application/json;charset=utf-8", 
+    String("{")
+    + "\"version\":" + String(FIRMWARE_VERSION) + ","
+    + "\"time\":\"" + get_format_datetime_from_current_timestamp() + "\","
+    + "\"crt_wifi_ssid\":\"" + wifi_ssid.c_str() + "\","
+    + "\"crt_wifi_pwd\":\"" + wifi_pwd.c_str() + "\","
+    + "\"crt_wifi_status\":" + String(WiFi.status()) + ","
+    + "\"crt_ap_ssid\":\"" + wifi_ap_name.c_str() + "\","
+    + "\"crt_ap_pwd\":\"" + wifi_ap_passwd.c_str() + "\","
+    + "\"clock_mode\":" + String(clock_mode) + ","
+    + "\"is_12_hour\":" + String(clock_is_12_hour ? "true" : "false") + ","
+    + "\"time_zone\":" + time_zone + ","
+    + "\"fs_total\":" + String(SPIFFS.totalBytes()) + ","
+    + "\"fs_used\":" + String(SPIFFS.usedBytes()) + ","
+    + "\"gain\":" + String(i2s_gain) + ","
+    + "\"birthday\":" + String(birthday) 
+    + "}"
+  );
+
+}
+
+void httpd_handler_get_wifi_list(){
+
+  httpd_set_header_cros();
+
+
+  int n = WiFi.scanNetworks();
+
+  String r = "{"; 
+  r += "\"list\":[";
+  for(int i = 0; i < n; i++){
+    r += "{\"name\":\"" + WiFi.SSID(i) + "\", \"checked\":" + (wifi_ssid == WiFi.SSID(i) ? "true" : "false")  + "}" + ((i < n-1) ? "," : "") ;
+  }
+  r += "],";
+  r += "\"total\":" + String(n);
+  r += "}";
+
+  httpd_server.send(
+    200, 
+    "application/json;charset=utf-8", 
+    r
+  );
+}
+
+void httpd_handler_use_browser_time(){
+
+   httpd_set_header_cros();
+
+  String browser_time = httpd_server.arg("browser_time");
+  String network_time = httpd_server.arg("network_time");
+  String ret = "OK";
+  if(browser_time.length() > 0){
+    long browser_time_long = atol(browser_time.c_str());
+    unsigned long browser_timestamp = browser_time_long < 0 ? 0 : browser_time_long;
+    current_timestamp = browser_timestamp;
+    start_audio(spk_prood_time.c_str());
+    start_proof_time();
+  }else{
+    if(WiFi.status() == WL_CONNECTED){
+      current_timestamp = network_timestamp;
+      start_audio(spk_prood_time.c_str());
+      start_proof_time();
+    }else{
+      start_audio(spk_not_net.c_str());
+      ret = "FAILED";
+    }
+  }
+
+  httpd_server.send(
+    200, 
+    "text/plain", 
+    ret
+  );
+}
+
+void httpd_handler_change_wifi(){
+
+ httpd_set_header_cros();
+
+  String ssid = httpd_server.arg("ssid");
+  String pwd = httpd_server.arg("pwd");
+ 
+  // WiFi.disconnect(true, false);
+
+  Serial_Loginfo("ssid: " + ssid + "\tpwd: " + pwd);
+
+  wifi_ssid = ssid;
+  wifi_pwd = pwd;
+
+  // TODO 保存 wifi信息
+
+  set_sys_value_to_spiffs("wifi_ssid", wifi_ssid);
+  set_sys_value_to_spiffs("wifi_pwd", wifi_pwd);
+
+
+  httpd_server.send(
+    200, 
+    "text/plain", 
+    "OK"
+  );
+
+  WiFi.begin(wifi_ssid.c_str(), wifi_pwd.c_str());
+  
+  wifi_connected_notify = false;
+  
+}
+
+void httpd_handler_get_wifi_status(){
+   httpd_set_header_cros();
+
+ httpd_server.send(
+    200, 
+    "text/plain", 
+    String(WiFi.status())
+  );
+  
+}
+
+void httpd_handler_save_config(){
+
+  httpd_set_header_cros();
+   
+  String _wifi_ap_name = httpd_server.arg("wifi_ap_name");
+  String _wifi_ap_passwd = httpd_server.arg("wifi_ap_passwd");
+  String _clock_mode = httpd_server.arg("clock_mode");
+  String _clock_is_12_hour = httpd_server.arg("clock_is_12_hour");
+  String _time_zone = httpd_server.arg("time_zone");
+  String _birthday = httpd_server.arg("birthday");
+
+  String restart = httpd_server.arg("restart");
+
+  if(_wifi_ap_name.length() > 0 && _wifi_ap_name != wifi_ap_name){
+    wifi_ap_name = _wifi_ap_name;   
+    set_sys_value_to_spiffs("wifi_ap_name", wifi_ap_name); 
+  }
+
+  if(_wifi_ap_passwd.length() > 0 && _wifi_ap_passwd != wifi_ap_passwd){
+    wifi_ap_passwd = _wifi_ap_passwd;
+     set_sys_value_to_spiffs("wifi_ap_passwd", wifi_ap_passwd);
+  }
+
+  if(_clock_mode.length() > 0 && _clock_mode.toInt() != clock_mode){
+    clock_mode = _clock_mode.toInt();
+    set_sys_value_to_spiffs("clock_mode", _clock_mode);
+  }
+
+  if(_clock_is_12_hour.length() > 0 && _clock_is_12_hour.toInt() != clock_is_12_hour){
+    clock_is_12_hour = _clock_is_12_hour.toInt();
+    set_sys_value_to_spiffs("clock_is_12_hour", _clock_is_12_hour);
+  }
+
+  if(_time_zone.length() > 0 && _time_zone.toInt() != time_zone){
+    time_zone = _time_zone.toInt();
+    set_sys_value_to_spiffs("time_zone", _time_zone);
+  }
+
+  if(_birthday.length() > 0){
+    birthday = (unsigned long) atol(_birthday.c_str());
+    set_sys_value_to_spiffs("birthday", _birthday);
+  }
+
+  httpd_server.send(
+    200, 
+    "text/plain", 
+    "OK"
+  );
+
+  if(restart == "true"){
+    delay(3000);
+    reboot();
+  }
+}
+
+void httpd_handler_clear_sys_val(){
+  httpd_set_header_cros();
+
+  clear_sys_value_to_spiffs();
+  httpd_server.send(
+    200, 
+    "text/plain", 
+    "OK"
+  );
+}
+
+void httpd_handler_delete_spiffs_path(){
+  httpd_set_header_cros();
+
+  String ret = "OK";
+
+  String path = httpd_server.arg("path");
+
+  if(SPIFFS.exists(path)){
+    SPIFFS.remove(path);
+  }else{
+    ret = "FAILED: NOT EXISTS";
+  }
+
+  httpd_server.send(
+    200, 
+    "text/plain", 
+    ret
+  );
+
+}
+
+void httpd_handler_check_firmware_upgrade(){
+
+  httpd_set_header_cros();
+
+  WiFiClient wifiClient;
+  HTTPClient httpClient;
+
+  String url = "http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/firmware/upgrade.json";
+ 
+  //重点2 通过begin函数配置请求地址。此处也可以不使用端口号和PATH而单纯的
+  httpClient.begin(wifiClient, url); 
+  Serial_Logdebug("URL: " + url); 
+
+ 
+  //重点3 通过GET函数启动连接并发送HTTP请求
+  int httpCode = httpClient.GET();
+  Serial_Logdebug("Send GET request to URL: " + url);
+  
+  String r = "";
+  String content = "";
+
+  //重点4. 如果服务器响应HTTP_CODE_OK(200)则从服务器获取响应体信息并通过串口输出
+  //如果服务器不响应HTTP_CODE_OK(200)则将服务器响应状态码通过串口输出
+  if (httpCode == HTTP_CODE_OK) {
+    // 使用getString函数获取服务器响应体内容
+    WiFiClient& stream = httpClient.getStream();
+    if(stream.available()){
+      Serial_Logdebug("stream.available()");
+      content = stream.readString();
+      Serial_Logdebug(String("content: ") + content);
+    }else{
+      r = "Stream Unavailable";
+    }
+  } else {
+    r = "FAILED " + String(httpCode);
+  }
+  
+  if(content.length() > 0){
+    httpd_server.send(
+      200, 
+      "application/json;charset=utf-8", 
+      content
+    );
+  }else{
+    httpd_server.send(
+      200, 
+      "application/json;charset=utf-8", 
+      String("{")
+      + "\"code\": 1, " 
+      + "\"msg\": \"" + r + "\"" 
+      + "}"
+    );
+  }
+
+  //重点5. 关闭ESP8266与服务器连接
+  httpClient.end();
+  wifiClient.stop();
+
+  // http_server_client.stop();  
+}
+
+void httpd_handler_firmware_upgrade(){
+
+  httpd_set_header_cros();
+
+  String binfile = httpd_server.arg("binfile");
+
+  String ret = firmware_upgrade(binfile);
+
+  httpd_server.send(
+    200, 
+    "application/json;charset=utf-8", 
+    ret
+  );
+  
+}
+
+void httpd_handler_set_gain(){
+  String gain = httpd_server.arg("gain");
+  if(gain.length() > 0){
+    float gain_f = gain.toFloat();
+    i2s_gain = gain_f;
+    set_gain_audio(gain_f);      
+    set_sys_value_to_spiffs("gain", String(gain));
+  }
+
+  httpd_server.send(
+    200, 
+    "application/json;charset=utf-8", 
+    String(i2s_gain)
+  );
+  
+}
+
 
 // 处理用户浏览器的HTTP访问
 void httpd_handler_other() {
@@ -1962,6 +2449,35 @@ void setup_httpd(){
   // 初始化 文件
   httpd_server.on("/api/init_file_upload", httpd_handler_init_file_upload);         // Index
 
+  // 获取 设备信息
+  httpd_server.on("/api/device_info", httpd_handler_device_info);         // Index
+
+  // 获取wifi列表
+  httpd_server.on("/api/get_wifi_list", httpd_handler_get_wifi_list);         // Index
+
+  // 使用浏览器时间
+  httpd_server.on("/api/use_browser_time", httpd_handler_use_browser_time);         // Index
+
+  // 变更 wifi
+  httpd_server.on("/api/change_wifi", httpd_handler_change_wifi);         // Index
+
+  // 获取wifi 状态 
+  httpd_server.on("/api/get_wifi_status", httpd_handler_get_wifi_status);         // Index
+
+  // 保存配置
+  httpd_server.on("/api/save_config", httpd_handler_save_config);         // Index
+
+    // 保存配置
+  httpd_server.on("/api/clear_sys_val", httpd_handler_clear_sys_val);         // Index
+
+  httpd_server.on("/api/delete_spiffs_path", httpd_handler_delete_spiffs_path);         // Index
+  
+  httpd_server.on("/api/check_firmware_upgrade", httpd_handler_check_firmware_upgrade); 
+  
+  httpd_server.on("/api/firmware_upgrade", httpd_handler_firmware_upgrade); 
+
+  httpd_server.on("/api/set_gain", httpd_handler_set_gain);
+
   // httpd_server.on("/upload.html",                    // 如果客户端通过upload页面
   //                   HTTP_POST,                         // 向服务器发送文件(请求方法POST)
   //                   respondOK,                         // 则回复状态码 200 给客户端
@@ -1969,6 +2485,8 @@ void setup_httpd(){
   
   httpd_server.onNotFound(httpd_handler_other);
 
+  httpd_server.enableCrossOrigin(true);
+  httpd_server.enableCORS(true);
 
   httpd_server.begin(); // 启动网站服务
 
@@ -1976,14 +2494,26 @@ void setup_httpd(){
 
 }
 
+void httpd_set_header_cros(){
+  //允许访问所有域 
+  // httpd_server.sendHeader("Access-Control-Allow-Origin", "*");
+  // httpd_server.sendHeader("Access-Control-Allow-Credentials", "true");
+  // httpd_server.sendHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  // httpd_server.sendHeader("Access-Control-Allow-Headers", "*");
+  
+}
+
 
 // 初始化 wifi 连接
 void setup_wifi_connect(){
   Serial_Loginfo("Init Wi-Fi 连接");
 
-  // //连接WIFI
-  WiFi.begin(ssid,password);
 
+  if(wifi_ssid.length() > 0){
+    //连接WIFI
+    WiFi.begin(wifi_ssid.c_str(), wifi_pwd.c_str());
+  }
+  
 }
 
 
@@ -2149,7 +2679,7 @@ void chime_time_check_handler(){
   int minutes = get_minutes_from_current_timestamp();
   int seconds = get_seconds_from_current_timestamp();
 
-  Serial_Loginfo("报时检查 " + String(hours) + ":" + String(minutes));
+  // Serial_Loginfo("报时检查 " + String(hours) + ":" + String(minutes));
 
   for(int i = 0; i < chime_list_len; i++){
     int chime_hour = chime_list[i][0];
@@ -2237,6 +2767,30 @@ void load_bells_config_from_spiffs(){
   }
 }
 
+void birthday_handler(){
+
+  int month = get_month_from_current_timestamp();
+  int month_day = get_month_day_from_current_timestamp();
+  int hour = get_hours_from_current_timestamp();
+  int minute = get_minutes_from_current_timestamp();
+  int seconds = get_seconds_from_current_timestamp();
+
+  int birthday_month = get_month_from_timestamp((time_t *)&birthday);
+  int birthday_month_day = get_month_day_from_timestamp((time_t *)&birthday);
+  int birthday_hour = get_hour_from_timestamp((time_t *)&birthday);
+  int birthday_minute = get_minute_from_timestamp((time_t *)&birthday);
+  int birthday_seconds = get_second_from_timestamp((time_t *)&birthday);
+
+  if(month == birthday_month 
+    && month_day == birthday_month_day
+    && (hour == 8 || hour == 20)
+    && minute == 1 
+    && seconds == 0){
+     start_audio("http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/bells/happy_birthday.mp3");
+  }
+
+}
+
 void setup_bells(){
   Serial_Loginfo("Init 闹钟");
 
@@ -2293,12 +2847,15 @@ void setup() {
 
   // 初始化 霍尔传感器输入
   setup_hall_sensor();
+ 
+  // 初始化spiffs
+  setup_spiffs();
+
+  // 初始化spiffs
+  setup_spiffs_config();
 
   // 初始化 音频 输出
   setup_audio();
-
-  // 初始化spiffs
-  setup_spiffs();
 
   // 初始化 定时器
   setup_timer();
@@ -2358,10 +2915,6 @@ void loop() {
   httpd_server.handleClient();
 
   
-
   // Serial_Loginfo("Running Time: " + String(current_millis));
 
 }
-
-
-
