@@ -1,15 +1,30 @@
+// esp8266 内存 过小 废弃
+
 
 #include <string.h>
 
 // #include <Arduino_JSON.h>
 
 #include <Arduino.h>
-#include <ESP8266WiFi.h>          
 #include <DNSServer.h>
-#include <ESP8266WebServer.h>
 #include <FS.h>
 
-// #include <LittleFS.h>
+#if defined(ESP8266)
+
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <LittleFS.h>
+
+#define SPIFFS LittleFS
+
+#endif
+#if defined(ESP32)
+
+#include <SPIFFS.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
+#endif
 
 #include <ESP8266TimerInterrupt.h> //需要加载Esp8266TimerInterrupt库，by Khoi Hoang
 #include <ESP8266_ISR_Timer.h>
@@ -33,7 +48,7 @@
 #define FIRMWARE_VERSION 10101
 
 // 悬浮时钟 开启 debug 日志 在最终版本中注释掉
-// #define HOLLOW_CLOCK_DEBUG
+#define HOLLOW_CLOCK_DEBUG
 // 串口 波特率
 #define SERIAL_BAUD_RATE 115200
 // 停止按钮引脚
@@ -121,8 +136,8 @@ volatile unsigned long current_millis;
 
 
 //设置需要连接的wifi的名称和密码
-const char *ssid ICACHE_RODATA_ATTR = "ChinaNet-KmSz";
-const char *password ICACHE_RODATA_ATTR ="19910529575";
+const char *ssid = "ChinaNet-KmSz";
+const char *password ="19910529575";
 
 // AudioGeneratorMP3 *mp3;
 // AudioFileSourceHTTPStream *file;
@@ -197,7 +212,7 @@ private:
 public:
   Stepper();
   Stepper(uint8_t a_pin, uint8_t b_pin, uint8_t c_pin, uint8_t d_pin);
-  Stepper(uint8_t a_pin, uint8_t b_pin, uint8_t c_pin, uint8_t d_pin, int delay_time);  
+  Stepper(uint8_t a_pin, uint8_t b_pin, uint8_t c_pin, uint8_t d_pin, int delay_time);
   void rotate(int step);
   void rotateAsync(int step, void (* cb) ());
   void addRotateAsync(int step);
@@ -267,7 +282,7 @@ void Stepper::rotateAsync(int step, void (* cb) () = NULL) {
   // 记录 步数
   this->_async_step_cnt = step >= 0 ? step : -step;
   this->_async_crt_step_cnt = 0;
-  
+
   // 是否反向
   this->_async_direction = step < 0;
 
@@ -287,7 +302,7 @@ void Stepper::addRotateAsync(int step) {
       if(step >= 0){
         this->_async_step_cnt += tmp_step;
       }else{
-        // 如果 步数 < 0  说明减小反转 
+        // 如果 步数 < 0  说明减小反转
         if(this->_async_step_cnt - this->_async_crt_step_cnt >= tmp_step){
           this->_async_step_cnt -= tmp_step;
         }else{
@@ -299,7 +314,7 @@ void Stepper::addRotateAsync(int step) {
     }else{
       // 如果正在反转
       if(step >= 0){
-         // 如果 步数 < 0  说明减小反转 
+         // 如果 步数 < 0  说明减小反转
         if(this->_async_step_cnt - this->_async_crt_step_cnt >= tmp_step){
           this->_async_step_cnt -= tmp_step;
         }else{
@@ -319,12 +334,12 @@ void Stepper::rotateAsyncHandle() {
 
   if(this->running && this->_async){
 
-  //     Serial_Logdebug("[Stepper] running: " + String(this->running) 
-  // + " async: " + String(this->_async) 
-  // + " _async_crt_step_cnt: " + String(this->_async_crt_step_cnt) 
+  //     Serial_Logdebug("[Stepper] running: " + String(this->running)
+  // + " async: " + String(this->_async)
+  // + " _async_crt_step_cnt: " + String(this->_async_crt_step_cnt)
   // + " _async_step_cnt" + String(this->_async_step_cnt));
 
-    
+
     // 正在运行 且是异步 ，还有 需要执行的步数
     if(this->_async_crt_step_cnt < this->_async_step_cnt){
 
@@ -336,10 +351,10 @@ void Stepper::rotateAsyncHandle() {
       for(int i = 0; i < 4; i++) {
         digitalWrite(this->port[i], this->seq[phase][i]);
       }
-      
+
       // 每执行一步 记录下来
       this->_async_crt_step_cnt++;
-      
+
     }else{
       if(this->_async_cb != NULL){
         this->_async_cb();
@@ -371,8 +386,8 @@ bool Stepper::isAsync(){
 }
 
 void Stepper::clearAsyncFlag(){
-  this->_async = false; 
-  this->_async_step_cnt = 0; 
+  this->_async = false;
+  this->_async_step_cnt = 0;
   this->_async_crt_step_cnt = 0;
   this->_async_cb = NULL;
   this->phase = 0;
@@ -429,7 +444,7 @@ volatile bool ntp_allow_update_flag = false;
 // wifi是否已连接
 volatile bool wifi_connected_notify = false;
 
-// 时钟模式 
+// 时钟模式
 // 0: 秒模式 一次走一秒钟的距离
 // 1: 分模式 一次走一分钟的距离
 volatile int clock_mode = 0;
@@ -458,22 +473,22 @@ void ICACHE_RAM_ATTR stop_btn_interrupt(){
 }
 
 // 当 触发 6时 时，执行此中断处理
-void ICACHE_RAM_ATTR hour_in_interrupt(){ 
+void ICACHE_RAM_ATTR hour_in_interrupt(){
   // 每次触发时，记录触发时的时间
   hour_in_enable = current_millis;
   if(current_millis - hour_in_lock < CLOCK_ZERO_POS_INTERVAL_MIN && current_millis - hour_in_lock > 0) return;
   hour_in_lock = current_millis;
-  Serial_Loginfo("触发 6点 中断..."); 
+  Serial_Loginfo("触发 6点 中断...");
 
   // 检查是否6点报告给主程序
-  
+
 
   // 如果初始化过， 且 一小时内 再次 触发跳过
   if(proof_time_inited && current_millis - hour_in_lock <  CLOCK_ZERO_POS_INTERVAL_MAX && current_millis - hour_in_lock > 0){
-    Serial_Loginfo("自动对时已初始化, 跳过"); 
+    Serial_Loginfo("自动对时已初始化, 跳过");
     return;
-  } 
-  
+  }
+
 
 
   // 如果正在对时， 计算 时间偏差，计算需要走的步数， 开始对时
@@ -488,13 +503,13 @@ void ICACHE_RAM_ATTR hour_in_interrupt(){
   // 计算 需要转的圈数 如果 大于 12点 时 减 12 小时
   // 先 停止掉 步进电机
 
-  Serial_Loginfo("停掉 步进电机"); 
+  Serial_Loginfo("停掉 步进电机");
   stepper->stop();
 
 
-  Serial_Loginfo("计算 偏移量"); 
+  Serial_Loginfo("计算 偏移量");
 
-  int hours = get_hours_from_current_timestamp();  
+  int hours = get_hours_from_current_timestamp();
   int minutes = get_minutes_from_current_timestamp();
   int seconds = get_seconds_from_current_timestamp();
 
@@ -513,26 +528,26 @@ void ICACHE_RAM_ATTR hour_in_interrupt(){
   if(hours_range >= 0){
     tmp_step = STEPS_PER_ROTATION * hours_range + ((STEPS_PER_ROTATION / 60) * minutes) +  ((STEPS_PER_ROTATION / 60 / 60) * seconds);
 
-    Serial_Loginfo("6点 到 12点之间 正转 " + String(hours_range) + " " + String(minutes) + " " + String(seconds) + " steps:" + String(tmp_step));  
+    Serial_Loginfo("6点 到 12点之间 正转 " + String(hours_range) + " " + String(minutes) + " " + String(seconds) + " steps:" + String(tmp_step));
     Serial_Loginfo("目标时间: " + String(hours) + ":" + String(minutes) + ":" + String(seconds));
 
   }else{
 
     hours_range = -hours_range;
-    
+
     int pos_seconds = (60 - seconds) % 60;
 
-    int pos_minutes = pos_seconds > 0 
+    int pos_minutes = pos_seconds > 0
                     ? (60 - minutes - 1) % 60
                     : (60 - minutes) % 60;
 
-    int pos_hours   = pos_point_time - hours - 1;           
+    int pos_hours   = pos_point_time - hours - 1;
 
     tmp_step = STEPS_PER_ROTATION * pos_hours + ((STEPS_PER_ROTATION / 60) * pos_minutes) +  ((STEPS_PER_ROTATION / 60 / 60) * pos_seconds);
 
     tmp_step = -tmp_step;
 
-    Serial_Loginfo("0点 到 6点之间 反转 " + String(pos_hours) + " " + String(pos_minutes) + " " + String(pos_seconds) + " steps:" + String(tmp_step));  
+    Serial_Loginfo("0点 到 6点之间 反转 " + String(pos_hours) + " " + String(pos_minutes) + " " + String(pos_seconds) + " steps:" + String(tmp_step));
     Serial_Loginfo("目标时间: " + String(hours) + ":" + String(minutes) + ":" + String(seconds));
   }
 
@@ -541,24 +556,24 @@ void ICACHE_RAM_ATTR hour_in_interrupt(){
 }
 
 // 当 触发 整点 时，执行此中断处理
-void ICACHE_RAM_ATTR min_in_interrupt(){ 
+void ICACHE_RAM_ATTR min_in_interrupt(){
   // 每次触发时，记录触发时的时间
   minute_in_enable = current_millis;
   if(current_millis - minute_in_lock < CLOCK_ZERO_POS_INTERVAL_MIN && current_millis - minute_in_lock > 0) return;
   minute_in_lock = current_millis;
-  Serial_Loginfo("触发 整点 中断..."); 
+  Serial_Loginfo("触发 整点 中断...");
 
 }
 
 bool is_hour_in_enable(){
-  return hour_in_enable > 0 
-    && current_millis - hour_in_enable > 0 
+  return hour_in_enable > 0
+    && current_millis - hour_in_enable > 0
     && current_millis - hour_in_enable < 1500;
 }
 
 bool is_minute_in_enable(){
-  return minute_in_enable > 0 
-    && current_millis - minute_in_enable > 0 
+  return minute_in_enable > 0
+    && current_millis - minute_in_enable > 0
     && current_millis - minute_in_enable < 1500;
 }
 
@@ -572,7 +587,7 @@ void ICACHE_RAM_ATTR TimerHandler() {
 
   for(int i = 0; i < time_handler_frequency_len; i++){
     if(time_handler_counter % time_handler_frequency[i] == 0){
-      time_handler_list[i]();      
+      time_handler_list[i]();
     }
   }
 
@@ -638,7 +653,7 @@ void timer_60000ms_handler(){
 }
 
 
-// 处理 时钟每次移动的步数 
+// 处理 时钟每次移动的步数
 void timer_clock_interval_handle(int timer_val){
 
 // #ifdef HOLLOW_CLOCK_DEBUG
@@ -647,7 +662,7 @@ void timer_clock_interval_handle(int timer_val){
 //       stepper->rotateAsync(0);
 //     }
 //     stepper->addRotateAsync(STEPS_PER_ROTATION / 60);
-    
+
 // #else
 
   if(clock_mode == CLOCK_MODE_SECOND && timer_val == 1000){
@@ -661,8 +676,8 @@ void timer_clock_interval_handle(int timer_val){
       // 补偿 每分钟缺少 32 步的问题
       // STEPS_PER_ROTATION / 60 / 60 = 8.533333333333333
       // 512 - (60 * 8 = 480) = 32
-      stepper->addRotateAsync(32);   
-      // stepper->addRotateAsync((STEPS_PER_ROTATION / 60) - (60 * (STEPS_PER_ROTATION / 60 / 60)));   
+      stepper->addRotateAsync(32);
+      // stepper->addRotateAsync((STEPS_PER_ROTATION / 60) - (60 * (STEPS_PER_ROTATION / 60 / 60)));
     }
 
   }else if(clock_mode == CLOCK_MODE_MINUTE && timer_val == 60000){
@@ -673,7 +688,7 @@ void timer_clock_interval_handle(int timer_val){
     stepper->addRotateAsync(STEPS_PER_ROTATION / 60);
 
   }
-  
+
 // #endif
 
 }
@@ -720,13 +735,13 @@ void get_network_time_handler() {
   if(!ntp_inited){
     timeClient.end();
     timeClient.begin();
-    timeClient.setUpdateInterval(5 * 60 * 1000);    // 五分钟 更新同步一次网络时间 
+    timeClient.setUpdateInterval(5 * 60 * 1000);    // 五分钟 更新同步一次网络时间
     timeClient.setTimeOffset(3600 * time_zone); //+1区，偏移3600，+8区，偏移3600*8
   }
 
   if(!ntp_allow_update_flag || WiFi.status() != WL_CONNECTED){ return; }
   // 执行完后将标记置为false
-  ntp_allow_update_flag = false;  
+  ntp_allow_update_flag = false;
 
   timeClient.update();
   unsigned long epochTime = timeClient.getEpochTime();
@@ -738,15 +753,15 @@ void get_network_time_handler() {
     ntp_inited = true;
     current_timestamp = network_timestamp;
   }
- 
+
   // // 打印时间
-  // int currentHour = timeClient.getHours(); 
-  // int currentMinute = timeClient.getMinutes(); 
-  // int weekDay = timeClient.getDay(); 
- 
+  // int currentHour = timeClient.getHours();
+  // int currentMinute = timeClient.getMinutes();
+  // int weekDay = timeClient.getDay();
+
   // //将epochTime换算成年月日
   // struct tm *ptm = gmtime((time_t *)&epochTime);
-  
+
   // int monthDay = ptm->tm_mday;
   // int currentMonth = ptm->tm_mon + 1;
   // int year = ptm->tm_year;
@@ -771,19 +786,19 @@ int get_month_day_from_current_timestamp(){
 int get_hours_from_current_timestamp(){
   // struct tm *ptm = gmtime((time_t *)&current_timestamp);
   // return ptm->tm_hour;
-  return timeClient.getHours(); 
+  return timeClient.getHours();
 }
 
 int get_minutes_from_current_timestamp(){
   // struct tm *ptm = gmtime((time_t *)&current_timestamp);
   // return ptm->tm_min;
-  return timeClient.getMinutes(); 
+  return timeClient.getMinutes();
 }
 
 int get_seconds_from_current_timestamp(){
   // struct tm *ptm = gmtime((time_t *)&current_timestamp);
   // return ptm->tm_sec;
-   return timeClient.getSeconds(); 
+   return timeClient.getSeconds();
 }
 
 
@@ -817,7 +832,7 @@ void setup_timer(){
 
   time_handler_frequency[1] = 1000;                        // 1秒
   time_handler_list[1] = timer_1000ms_handler;
-  
+
     time_handler_frequency[2] = 60000;                    // 5分钟
   time_handler_list[2] = timer_60000ms_handler;
 
@@ -827,7 +842,7 @@ void setup_timer(){
   time_handler_frequency_len = 4;
 
   Serial_Loginfo("Init 定时器 finish");
-  
+
 }
 
 
@@ -838,7 +853,7 @@ void setup_stepper(){
   Serial_Loginfo("Init 步进电机");
 
   stepper = new Stepper(STEPPER_A_PIN, STEPPER_B_PIN, STEPPER_C_PIN, STEPPER_D_PIN);
-  
+
 }
 
 // 初始化 停止按钮
@@ -847,7 +862,7 @@ void setup_stop_button(){
 
     //设置中断触发程序
   pinMode(STOP_BUTTON_PIN, INPUT_PULLUP);
-  attachInterrupt(STOP_BUTTON_PIN, stop_btn_interrupt, FALLING);  
+  attachInterrupt(STOP_BUTTON_PIN, stop_btn_interrupt, FALLING);
 
 }
 
@@ -882,7 +897,7 @@ void setup_spiffs(){
     Serial_Loginfo("[SPIFFS] mount failed");
   }
 
-  // FSInfo fsinfo;
+  FSInfo fsinfo;
   SPIFFS.info(fsinfo);
 
   Serial_Loginfo("[SPIFFS] totalBytes\t\t" + String(fsinfo.totalBytes));
@@ -905,26 +920,26 @@ void setup_wifi_ap(){
   WiFi.softAPConfig(softLocal, softGateway, softSubnet);
 
   // 2 设置WIFI名称
-  String apName = (WIFI_AP_NAME + (String)ESP.getChipId());  
+  String apName = (WIFI_AP_NAME + (String)ESP.getChipId());
   const char *softAPName = apName.c_str();
- 
+
   // 3创建wifi  名称 +密码 如果没有密码不设置
   #ifdef WIFI_AP_PASSWD
-  WiFi.softAP(softAPName, WIFI_AP_PASSWD);     
+  WiFi.softAP(softAPName, WIFI_AP_PASSWD);
   #else
-  WiFi.softAP(softAPName);     
+  WiFi.softAP(softAPName);
   #endif
   // 4输出创建的WIFI IP地址
-  IPAddress myIP = WiFi.softAPIP();  
+  IPAddress myIP = WiFi.softAPIP();
 
   // 5输出WIFI 名称
-  Serial_Loginfo("[Wi-Fi] softAPName: ");  
+  Serial_Loginfo("[Wi-Fi] softAPName: ");
   Serial_Loginfo(apName);
   Serial_Loginfo("AP IP address: ");
   Serial_Loginfo(myIP.toString());
 
   Serial_Loginfo("Init Wi-Fi AP Finish");
-  
+
 }
 
 
@@ -958,8 +973,8 @@ void httpd_handler_index(){
 }
 
 void httpd_handler_init_html(){
-  httpd_server.send(200, 
-  "text/html", 
+  httpd_server.send(200,
+  "text/html",
   "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Clock Init</title><meta charset=\"utf-8\"><meta http-equiv=\"X-UA-Compatible\"content=\"IE=edge\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1\"></head><body><textarea class=\"init_text_input\"style=\"width: 100%;height: 200px;\"value=\"\"></textarea><div class=\"submit\">提交</div><script type=\"application/javascript\">document.onreadystatechange=function(){document.querySelector(\".submit\").onclick=async function(){var val=document.querySelector(\".init_text_input\").value;var val_items=val.trim().split(\"\n\");for(var i=0;i<val_items.length;i++){var val_item=val_items[i].trim();var val_arr=val_item.split(\" \");var val_path=val_arr[0].trim();var val_url=val_arr[1].trim();var resp=await fetch('./api/init_file_upload?path='+val_path+'&url='+val_url,{method:'get',headers:{'Content-Type':'text/plain'}}).then((res)=>res.text());console.log(resp)}}}</script></body></html>"
   );
 }
@@ -972,17 +987,17 @@ void httpd_handler_init_file_upload(){
 
   WiFiClient wifiClient;
   HTTPClient httpClient;
- 
+
   //重点2 通过begin函数配置请求地址。此处也可以不使用端口号和PATH而单纯的
-  httpClient.begin(wifiClient, url); 
-  Serial.print("URL: "); 
+  httpClient.begin(wifiClient, url);
+  Serial.print("URL: ");
   Serial.println(url);
- 
+
   //重点3 通过GET函数启动连接并发送HTTP请求
   int httpCode = httpClient.GET();
   Serial.print("Send GET request to URL: ");
   Serial.println(url);
-  
+
   String r = "";
 
   //重点4. 如果服务器响应HTTP_CODE_OK(200)则从服务器获取响应体信息并通过串口输出
@@ -995,7 +1010,7 @@ void httpd_handler_init_file_upload(){
       Serial.println("stream.available()");
 
       // 打开文件
-      File file = SPIFFS.open(path, "w"); 
+      File file = SPIFFS.open(path, "w");
 
       Serial.println("file availableForWrite " + file.availableForWrite());
 
@@ -1009,7 +1024,7 @@ void httpd_handler_init_file_upload(){
       file.close();
 
       Serial.println("file exists " + String(SPIFFS.exists(path)));
-      
+
 
        r = "OK";
     }else{
@@ -1017,11 +1032,11 @@ void httpd_handler_init_file_upload(){
       r = "Stream Unavailable";
     }
 
-    
+
   } else {
     r = "FAILED " + String(httpCode);
   }
- 
+
   //重点5. 关闭ESP8266与服务器连接
   httpClient.end();
   wifiClient.stop();
@@ -1032,14 +1047,14 @@ void httpd_handler_init_file_upload(){
 
 // 处理用户浏览器的HTTP访问
 void httpd_handler_other() {
- 
+
     // 获取用户请求网址信息
     String webAddress = httpd_server.uri();
 
 
     // 通过handleFileRead函数处处理用户访问
     bool fileReadOK = httpd_handler_file_read(webAddress);
- 
+
     // 如果在SPIFFS无法找到用户访问的资源，则回复404 (Not Found)
     if (!fileReadOK) {
       Serial_Loginfo(("[httpd] 404 " + (String)httpd_server.hostHeader() + (String)webAddress));
@@ -1055,13 +1070,13 @@ void httpd_handler_respond_ok() {
 }
 
 bool httpd_handler_file_read(String path) { // 处理浏览器HTTP访问
- 
+
     if (path.endsWith("/")) {                         // 如果访问地址以"/"为结尾
         path = "/index.html";                         // 则将访问地址修改为/index.html便于SPIFFS访问
     }
- 
+
     String contentType = getContentType(path); // 获取文件类型
- 
+
     if (SPIFFS.exists(path)) {                        // 如果访问的文件可以在SPIFFS中找到
         File file = SPIFFS.open(path, "r");           // 则尝试打开该文件
         httpd_server.streamFile(file, contentType); // 并且将该文件返回给浏览器
@@ -1098,9 +1113,9 @@ bool httpd_handler_captive_portal() {
   if (!isIp(httpd_server.hostHeader()) ) {
     Serial_Loginfo("Request redirected to captive portal");
     // httpd_server.sendHeader("Location", String("http://") + toStringIp(httpd_server.client().localIP()), true);
-    
+
     httpd_server.sendHeader("Location", String("http://") + WIFI_IP_DOMAIN, true);
-    
+
     httpd_server.send(302, "text/plain", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
     httpd_server.client().stop(); // Stop is needed because we sent no content length
     return true;
@@ -1145,7 +1160,7 @@ void setup_httpd(){
   httpd_server.on("/", httpd_handler_index);         // Index
 
   httpd_server.on("/init.html", httpd_handler_init_html);         // Index
-  
+
   // 初始化 文件
   httpd_server.on("/api/init_file_upload", httpd_handler_init_file_upload);         // Index
 
@@ -1153,7 +1168,7 @@ void setup_httpd(){
   //                   HTTP_POST,                         // 向服务器发送文件(请求方法POST)
   //                   respondOK,                         // 则回复状态码 200 给客户端
   //                   handleFileUpload);                 // 并且运行处理文件上传函数
-  
+
   httpd_server.onNotFound(httpd_handler_other);
 
 
@@ -1208,7 +1223,7 @@ void setup_net_time(){
   // 放置到 wifi 连接以后
   // timeClient.begin();
   // timeClient.setTimeOffset(28800); //+1区，偏移3600，+8区，偏移3600*8
-  
+
 }
 
 // 初始化 校对时间
@@ -1220,7 +1235,7 @@ void setup_proof_time(){
   // stepper->rotateAsync(10000000);
 }
 
-// void setup_arduino_ota(){  
+// void setup_arduino_ota(){
 //   Serial_Loginfo("Init Arduino OTA");
 
 //   ArduinoOTA.onStart([]() {
@@ -1254,7 +1269,7 @@ void setup_proof_time(){
 //       Serial_Loginfo("[ArduinoOTA] End Failed");
 //     }
 //   });
-  
+
 //   ArduinoOTA.begin();
 
 //   Serial.println("ArduinoOTA Ready");
@@ -1267,7 +1282,7 @@ void setup_proof_time(){
 void start_proof_time(){
 
   Serial_Loginfo("Init 时间校对");
-  
+
   proof_time_inited = false;
   proof_time_running = true;
 
@@ -1280,7 +1295,7 @@ void prood_time_after(){
   proof_time_inited = true;
   proof_time_running = false;
 
-  int hours = get_hours_from_current_timestamp();  
+  int hours = get_hours_from_current_timestamp();
   int minutes = get_minutes_from_current_timestamp();
   int seconds = get_seconds_from_current_timestamp();
 
@@ -1288,7 +1303,7 @@ void prood_time_after(){
   Serial_Loginfo("当前时间: " + String(hours) + ":" + String(minutes) + ":" + String(seconds));
 }
 
-// 固件升级 
+// 固件升级
 void firmware_upgrade_started() {
   Serial_Loginfo("CALLBACK:  HTTP update process started");
 }

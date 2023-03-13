@@ -1,0 +1,41 @@
+/index.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/index.html
+/init.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/init.html
+/spiffs.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/spiffs.html
+/css/bootstrap.min.css http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/css/bootstrap.min.css
+/js/bootstrap.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/bootstrap.min.js
+/js/jquery.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/jquery.min.js
+/js/jquery.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/jquery.min.js
+/favicon.ico http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/favicon.ico
+
+/rings/time/t_0.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_0.mp3
+/rings/time/t_1.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_1.mp3
+/rings/time/t_2.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_2.mp3
+/rings/time/t_2_2.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_2_2.mp3
+/rings/time/t_3.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_3.mp3
+/rings/time/t_4.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_4.mp3
+/rings/time/t_5.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_5.mp3
+/rings/time/t_6.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_6.mp3
+/rings/time/t_7.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_7.mp3
+/rings/time/t_8.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_8.mp3
+/rings/time/t_9.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_9.mp3
+/rings/time/t_10.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_10.mp3
+/rings/time/t_bj.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_bj.mp3
+/rings/time/t_am.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_am.mp3
+/rings/time/t_pm.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_pm.mp3
+/rings/time/t_cm.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_cm.mp3
+/rings/time/t_dot.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_dot.mp3
+/rings/time/t_minute.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_minute.mp3
+/rings/time/t_whole.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/time/t_whole.mp3
+
+/rings/tip/no_net.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/tip/no_net.mp3
+/rings/tip/not_audio_t.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/tip/not_audio_t.mp3
+/rings/tip/not_found_audio.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/tip/not_found_audio.mp3
+/rings/tip/not_pos.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/tip/not_pos.mp3
+/rings/tip/prood_time.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/tip/prood_time.mp3
+/rings/tip/wifi_connected.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/tip/wifi_connected.mp3
+
+/rings/bells/didi.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/bells/didi.mp3
+
+
+
+

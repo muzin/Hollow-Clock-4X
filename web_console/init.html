@@ -14,7 +14,7 @@
   <div class="submit">提交</div>
 
   <script type="application/javascript">
-    document.onreadystatechange=  function(){
+    document.onreadystatechange = function(){
 
       document.querySelector(".submit").onclick = async function (){
 
@@ -24,6 +24,7 @@
 
         for(var i = 0; i < val_items.length; i++){
           var val_item = val_items[i].trim();
+          if(val_item.length == 0){ continue; }
           var val_arr = val_item.split(" ");
           var val_path = val_arr[0].trim();
           var val_url = val_arr[1].trim();
