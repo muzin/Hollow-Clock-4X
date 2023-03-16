@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+  <title>Hollow Clock 4X</title>
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+
+  <style type="text/css">
+    .clock_console_warpper {
+      /*padding:5px;*/
+    }
+
+    html{
+      height: 100%;
+    }
+    body{
+      height: 100%;
+      background: #eee;
+    }
+
+    .clock_console_title {
+      /*background-color: #2663f6;*/
+      background-color: #6540f0;
+      color: #fff;
+      width:100%;
+      height: 60px;
+      font-size: 23px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      top: 0px;
+    }
+    .clock_console_title > span {
+      color: #fff;
+    }
+
+    .clock_console_title_setting_wrapper {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 65px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .clock_console_title_setting_wrapper > img {
+      width: 40px;
+      height: 40px;
+    }
+
+    .clock_items_wrapper {
+      display: flex;
+      height: 100%;
+      width: 100%;
+      flex-direction: column;
+      margin-top: 60px;
+    }
+
+    .clock_item{
+      width: 100%;
+      height: 100px;
+    }
+
+    .clock_item_wrapper {
+      background: #fff;
+      margin: 15px 10px;
+      height: 100%;
+      border-radius: 10px;
+      padding: 10px 10px;
+      display: flex;
+      flex-direction: row;
+    }
+
+    .clock_left {
+      width: 80%;
+    }
+    .clock_right {
+      width: 20%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .clock_time {
+      font-size: 40px;
+    }
+    .clock_desc  {
+      display: flex;
+      flex-direction: row;
+    }
+    .clock_desc_title {
+      color: #fa4d50;
+    }
+    .clock_desc_interval {
+      color: #555555;
+      margin-left: 10px;
+    }
+
+    .clock_enable_btn {
+      width: 50px;
+      height: 25px;
+      position: relative;
+      border-radius: 12.5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .clock_enable_btn_bg {
+      width: 50px;
+      height: 20px;
+      background: #eee;
+      /* opacity: 0.6; */
+      border-radius: 12.5px;
+    }
+    .clock_enable_btn_dot {
+      height: 25px;
+      width: 25px;
+      background: #6540f0;
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      border-radius: 12.5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .clock_enable_btn_dot_dot {
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 12.5px;
+    }
+
+    .clock_item_add_btn_wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .clock_item_add_btn {
+      width: 65px;
+      height: 65px;
+    }
+
+    .clock_item_add_btn > img {
+      /*color: #6540f0;*/
+      width: 65px;
+      height: 65px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="clock_console_title">
+  <span> Hollow Clock 4X </span>
+
+  <div class="clock_console_title_setting_wrapper">
+    <img src="./svg/setting.svg"/>
+  </div>
+</div>
+
+<div class="clock_items_wrapper">
+
+  <div class="clock_items">
+    <div class="clock_item">
+      <div class="clock_item_wrapper clock_item_add_btn_wrapper">
+        <div class="clock_item_add_btn">
+          <img src="./svg/add.svg"/>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="clock_items clock_list">
+    <div class="clock_item">
+      <div class="clock_item_wrapper">
+        <div class="clock_left">
+          <div class="clock_time">
+            06:30
+          </div>
+          <div class="clock_desc">
+            <div class="clock_desc_title">ttitle</div>
+            <div class="clock_desc_interval">Everyday</div>
+          </div>
+        </div>
+
+        <div class="clock_right">
+          <div class="clock_enable_wrapper">
+            <div class="clock_enable_btn">
+              <div class="clock_enable_btn_bg">
+
+              </div>
+              <div class="clock_enable_btn_dot">
+                <div class="clock_enable_btn_dot_dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+<script src="./js/jquery.min.js"></script>
+<!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+<script src="./js/bootstrap.min.js"></script>
+<script type="application/javascript">
+
+  var domain = "http://192.168.1.13";
+  // var domain = "."
+
+  $(document).ready(function(){
+
+    $(".clock_console_title_setting_wrapper").click(function(){
+      location.href = "./settings.html";
+    });
+
+    $(".clock_item_add_btn").click(function(){
+      location.href = "./settings.html";
+    });
+
+  });
+</script>
+
+</body>
+</html>

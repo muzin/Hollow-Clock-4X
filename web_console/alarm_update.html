@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+  <title>Hollow Clock 4X</title>
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+
+
+  <style type="text/css">
+    .clock_console_warpper {
+      /*padding:5px;*/
+    }
+    .clock_console_title {
+      /*background-color: #2663f6;*/
+      background-color: #6540f0;
+      color: #fff;
+      width:100%;
+      height: 60px;
+      font-size: 23px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      top: 0px;
+    }
+    .clock_console_title > span {
+      color: #fff;
+    }
+
+    .clock_console_items{
+      display: flex;
+      height: 100%;
+      width: 100%;
+      flex-direction: column;
+      margin-top: 60px;
+    }
+
+    .item_title {
+      background: #eee;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding-left: 5px;
+      font-weight: bold;
+    }
+
+    .wifi_ssid_wrapper, .wifi_pwd_wrapper{
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 10px 10px;
+    }
+
+    .item_title_name{
+      padding: 0px 10px;
+      width: 33%;
+    }
+
+    .wifi_ssid_select{
+      display: flex;
+      width: 50%;
+    }
+
+    .wifi_ssid_val {
+      width: 67.77777%;
+    }
+    .set_clock_time_btn_wrapper{
+      display: flex;
+      justify-content: center;
+      height: 80px;
+      align-items: center;
+    }
+
+    .wifi_ssid_refresh {
+      height: 34px;
+      margin-left: 10px;
+      font-size: 14px;
+      width: 30% !important;
+    }
+
+    .storage_wrapper, .gain_wrapper {
+      width: 100%;
+      height: 20px;
+      background: #eee;
+      border-radius: 5px;
+    }
+
+    .storage_process, .gain_process{
+      width: 0%;
+      height: 20px;
+      background: #6540f0;
+      border-radius: 5px;
+      transition: width 0.5s ease 0s;
+    }
+
+
+
+
+    .update_wifi_btn_wrapper {
+      display: none;
+    }
+
+    .clock_btn {
+      width: 40%;
+      text-align: center;
+      background: #6540f0;
+      color: #fff;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .clock_btn:active {
+      color: #fff;
+    }
+    .clock_btn:hover, .clock_btn:focus-within {
+      color: #fff;
+      text-decoration-line: none;
+    }
+
+    .tip {
+      color:#aaa;width:100%; padding: 5px 10px;
+    }
+
+    .gain_btn {
+      width: 35px;
+      height: 35px;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      background: #eee;
+      border-radius: 5px;
+    }
+
+    .clock_console_back {
+      height: 60px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      /*display: flex;*/
+      width: 45px;
+      justify-content: center;
+      align-items: center;
+      display: none;
+    }
+
+    .clock_console_back > img {
+      width: 40px;
+      height: 40px;
+    }
+
+    .delete_btn {
+      background: #eee;
+      color: #f13;
+      display: none;
+    }
+
+    .loading_wrapper{
+      /*display: flex;*/
+      display:none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      background-color: #333;
+      opacity: 0.8;
+      /* display: none; */
+      justify-content: center;
+      align-items: center;
+      transition: width 0.5s ease 0s;
+    }
+    .loading_text {
+      color: #fff;
+      font-size: 16px;
+    }
+
+
+  </style>
+</head>
+<body>
+
+<div class="clock_console_warpper">
+
+  <div class="clock_console_title">
+    <span> Hollow Clock 4X </span>
+
+    <div class="clock_console_back">
+      <img src="./svg/back.svg"/>
+    </div>
+  </div>
+
+
+  <div class="clock_console_items">
+
+    <div class="clock_console_item">
+
+      <div class="wifi_ssid_wrapper">
+        <div class="wifi_ssid_title item_title_name">
+          标题
+        </div>
+        <div class="wifi_ssid_select" style="width: 67.777777%;">
+          <input id="alarm_title" class=" form-control" type="text"/>
+        </div>
+      </div>
+
+      <div class="wifi_ssid_wrapper">
+        <div class="wifi_ssid_title item_title_name">
+          时间
+        </div>
+        <div class="wifi_ssid_select" style="width: 67.777777%;">
+          <input  id="alarm_time" class=" form-control" type="time"/>
+        </div>
+      </div>
+
+      <div class="wifi_ssid_wrapper">
+        <div class="wifi_ssid_title item_title_name">
+          重复
+        </div>
+        <div class="wifi_ssid_select" style="width: 67.777777%;">
+          <select  id="alarm_report" class="wifi_ssid_val wifi_ssid_list wifi_ssid_selected_list form-control" style="width:100%;" placeholder="请选择Wi-Fi的SSID">
+            <option value="0" selected>仅一次</option>
+            <option value="1">每天</option>
+            <option value="2">自定义</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="wifi_ssid_wrapper custom_report" style="display: none;">
+        <div class="wifi_ssid_title item_title_name">
+          自定义周期
+        </div>
+        <div class="wifi_ssid_select" style="width: 67.777777%;">
+          <select  id="alarm_report_week" class="wifi_ssid_val wifi_ssid_list wifi_ssid_selected_list form-control" style="width:100%;height:160px;" multiple placeholder="请选择Wi-Fi的SSID">
+            <option value="1">周一</option>
+            <option value="2">周二</option>
+            <option value="3">周三</option>
+            <option value="4">周四</option>
+            <option value="5">周五</option>
+            <option value="6">周六</option>
+            <option value="7">周日</option>
+          </select>
+        </div>
+      </div>
+
+
+      <div class="wifi_ssid_wrapper">
+        <div class="wifi_ssid_title item_title_name">
+          铃声
+        </div>
+        <div class="wifi_ssid_select" style="width: 67.777777%;">
+          <select  id="alarm_audio"  class="wifi_ssid_val wifi_ssid_list wifi_ssid_selected_list form-control" placeholder="请选择Wi-Fi的SSID">
+            <option value="">无铃声</option>
+            <option value="http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/bells/didi.mp3">didi.mp3</option>
+            <option value="http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/bells/dida.mp3">滴答-侃侃.mp3</option>
+          </select>
+          <a class="clock_btn audio_manager_btn wifi_ssid_refresh" style="padding: 8px;">管理</a>
+        </div>
+      </div>
+
+
+      <div class="set_clock_time_btn_wrapper" style="justify-content: space-around;">
+        <a class="save_setting_btn alarm_submit_btn clock_btn" href="javascript:void(0);">
+          提交
+        </a>
+
+        <a class="delete_btn alarm_delete_btn clock_btn" href="javascript:void(0);">
+          删除
+        </a>
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+
+  <div class="loading_wrapper">
+    <div class="loading_text">
+      Loading...
+    </div>
+  </div>
+
+</div>
+
+
+<!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+<script src="./js/jquery.min.js"></script>
+<!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+<script src="./js/bootstrap.min.js"></script>
+
+<script type="application/javascript">
+
+  var domain = "http://192.168.1.13";
+  // var domain = "."
+
+  function open_loading(msg){
+    $(".loading_wrapper").css('display', 'flex');
+    if(msg != null){
+      $(".loading_text").text(msg);
+    }else{
+      $(".loading_text").text("Loading...");
+    }
+  }
+
+  function close_loading(){
+    $(".loading_wrapper").css('display', 'none');
+  }
+
+  $(document).ready(function() {
+
+    $(".alarm_submit_btn").click(async function(){
+      await save_alarm();
+    });
+
+    $(".alarm_delete_btn").click(async function(){
+      await delete_alarm();
+    });
+
+
+    $("#alarm_report").change(function(){
+      var val = $("#alarm_report").val();
+      console.log(val);
+      if(val == 2){
+        $(".custom_report").css('display', 'flex');
+      }else{
+        $(".custom_report").css('display', 'none');
+      }
+    })
+
+    if(location.search.indexOf("title=")>-1){
+      $(".delete_btn").css('display','block');
+    }
+
+    let urlParams = get_url_params();
+    if('title' in urlParams && urlParams['title'].length > 0){
+      get_alarm_info(urlParams['title']);
+    }
+
+  });
+
+  function get_url_params(){
+    var str = location.search.substr(1);
+    var str_arr = str.split("&");
+    var ret = str_arr.map((i)=>{
+      var i_arr = i.split("=");
+      var key = "";
+      var val = "";
+      if(i_arr.length > 0){
+        key = i_arr[0];
+      }
+      if(i_arr.length > 1){
+        val = i_arr[1];
+      }
+      return {key, val};
+    }).reduce((c, item, idx)=>{
+      c[item.key] = item.val;
+      return c;
+    }, {});
+    return ret;
+  }
+
+  async function get_alarm_info(title){
+
+    var result = await fetch(domain + "/api/alarm_info?title=" + title, {
+      method: 'get',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      }
+    }).then((res) => res.json());
+    sync_alarm_info_to_dom(result.data);
+  }
+
+  function sync_alarm_info_to_dom(alarm_info){
+    var title = alarm_info.title;
+    var time = alarm_info.time;
+    var report = alarm_info.report;
+    var report_week = alarm_info.week;
+    var audio = alarm_info.audio;
+
+    $("#alarm_title").val(title);
+    $("#alarm_time").val(time);
+
+    var report_options = $("#alarm_report > option");
+    for(var i = 0; i < report_options.length; i++){
+      var report_option = report_options[i];
+      report_option.selected = false;
+      if(report_option.value == report){
+        report_option.selected = true;
+      }
+    }
+
+    if(report == 2){
+      $(".custom_report").css('display', 'flex');
+
+      var report_week_options = $("#alarm_report_week > option");
+
+      for(var i = 0; i < report_week_options.length; i++){
+        var report_week_option = report_week_options[i];
+        report_week_option.selected = false;
+        if((report_week >> (report_week_option.value - 1) & 0x01) === 1){
+          report_week_option.selected = true;
+        }
+      }
+    }
+
+
+
+
+  }
+
+  async function save_alarm(){
+    var title = $("#alarm_title").val();
+    var time = $("#alarm_time").val();
+    var report = $("#alarm_report").val();
+    var report_week = $("#alarm_report_week").val();
+    var audio = $("#alarm_audio").val();
+
+    var time_arr = time.split(":");
+    var hour = time_arr[0];
+    var minute = time_arr[1];
+
+    var final_week = 0;
+    if(report == 2) {
+      var week_int = report_week.map(i => parseInt(i));
+      for (var i = 0; i < week_int.length; i++) {
+        final_week |= 1 << (week_int[i] - 1);
+      }
+    }
+
+    console.log(title, time, report, report_week, audio, final_week, final_week.toString(2));
+
+    // return;
+    var result = await fetch(domain + "/api/save_alarm?title=" + title
+            + "&hour=" + hour
+            + "&minute=" + minute
+            + "&report=" + report
+            + "&report_week=" + final_week
+            + "&audio=" + audio
+            + "&enable=1"
+            , {
+      method: 'get',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      }
+    }).then((res) => res.text());
+    alert(result);
+
+    if(result == 'OK'){
+      var timer = setTimeout(function(){
+        clearTimeout(timer);
+        location.href = './index.html';
+      }, 500);
+    }
+
+  }
+
+  async function delete_alarm(){
+    let urlParams = get_url_params();
+    if('title' in urlParams && urlParams['title'].length > 0){
+      var title = urlParams['title'];
+      var result = await fetch(domain + "/api/delete_alarm?title=" + title, {
+        method: 'get',
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8'
+        }
+      }).then((res) => res.text());
+      alert(result);
+      var timer = setTimeout(function(){
+        clearTimeout(timer);
+        location.href = './index.html';
+      }, 500);
+
+    }
+  }
+
+  function formatDate(date, format){
+    var d = null;
+
+    if(typeof date == 'string'){
+      try {
+        d = new Date(date);
+        if(d.toString() == 'Invalid Date'){
+          throw 'datetime is Invalid Date';
+        }
+      }catch(e){
+        console.error(e);
+        d = null;
+      }
+    }else if(date instanceof Date){
+      d = date;
+    }else{
+    }
+
+    if(d == null){
+      return '';
+    }
+
+    var _year = d.getFullYear();
+    var _month = d.getMonth() + 1;
+    var _date = d.getDate();
+
+    var _day = d.getDay();
+
+    var _hours = d.getHours();
+    var _minutes = d.getMinutes();
+    var _seconds = d.getSeconds();
+    var _mseconds = d.getMilliseconds();
+
+    var formatClone = format;
+    return formatClone
+            .replace(/yyyy/g, _year)
+            .replace(/MM/g, _month > 9 ? _month : '0' + _month)
+            .replace(/dd/g, _date > 9 ? _date : '0' + _date)
+            .replace(/hh/g, _hours > 9 ? _hours : '0' + _hours)
+            .replace(/mm/g, _minutes > 9 ? _minutes : '0' + _minutes)
+            .replace(/ss/g, _seconds > 9 ? _seconds : '0' + _seconds)
+            .replace(/ms/g, _mseconds > 9
+                    ? _mseconds > 99
+                            ? _mseconds
+                            : '0' + _mseconds
+                    : '00' + _mseconds);
+  }
+
+</script>
+</body>
+</html>

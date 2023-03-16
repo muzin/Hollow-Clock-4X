@@ -137,23 +137,6 @@
             border-radius: 5px;
         }
 
-        .clock_console_back {
-            height: 60px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            /*display: flex;*/
-            width: 45px;
-            justify-content: center;
-            align-items: center;
-            display: none;
-        }
-
-        .clock_console_back > img {
-            width: 40px;
-            height: 40px;
-        }
-
         .loading_wrapper{
             /*display: flex;*/
             display:none;
@@ -184,10 +167,6 @@
 
     <div class="clock_console_title">
         <span> Hollow Clock 4X </span>
-
-        <div class="clock_console_back">
-            <img src="./svg/back.svg"/>
-        </div>
     </div>
 
 
@@ -409,7 +388,7 @@
 
             <div class="wifi_ssid_wrapper" style="justify-content: space-between;">
                 <div class="storage_available_wrapper wifi_ssid_title item_title_name gain_btn gain_sub_btn" style="text-align:left;">
-                    <div style="text-align:left;">-</div>
+                   <div style="text-align:left;">-</div>
                 </div>
                 <div class="storage_used_wrapper wifi_ssid_title item_title_name gain_btn gain_add_btn" style="text-align:right;">
                     <div style="text-align:right;">+</div>
@@ -462,7 +441,7 @@
                     版本
                 </div>
                 <div class="firmware_val">
-                    _
+                   _
                 </div>
             </div>
 
@@ -617,14 +596,6 @@
                 $(".clock_time").text(clock_datetime_str);
             }
         }, 1000);
-
-        if(location.search.indexOf("&back=") > -1){
-            $(".clock_console_back").css('display', 'flex');
-            $(".clock_console_back").click(function(){
-                // history.back();
-                location.href = './index.html';
-            });
-        }
 
         get_device_info();
 
@@ -860,11 +831,11 @@
 
         var result = await fetch(domain + `/api/save_config?&wifi_ap_name=${wifi_ap_name_val}&wifi_ap_passwd=${wifi_ap_pwd_val}&clock_mode=${clock_mode_select_val}&clock_is_12_hour=${clock_is_12_hour_select_val}&time_zone=${time_zone_select_val}&birthday=${birthday_val_str}`,
             {
-                method: 'get',
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8'
-                }
-            }).then((res) => res.text());
+            method: 'get',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            }
+        }).then((res) => res.text());
 
         alert("重启后生效");
 
@@ -893,13 +864,13 @@
     async function check_upgrade(){
         open_loading("正在检查更新...")
         var result = await fetch(domain + `/api/check_firmware_upgrade`,
-            {
-                method: 'get',
-                // mode:'no-cors',
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8'
-                }
-            }).then((res) => res.json());
+        {
+            method: 'get',
+            // mode:'no-cors',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            }
+        }).then((res) => res.json());
 
         // result = JSON.parse(result);
 
