@@ -260,7 +260,7 @@
             <option value="http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/bells/didi.mp3">didi.mp3</option>
             <option value="http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/bells/dida.mp3">滴答-侃侃.mp3</option>
           </select>
-          <a class="clock_btn audio_manager_btn wifi_ssid_refresh" style="padding: 8px;">管理</a>
+          <a class="clock_btn audio_manager_btn wifi_ssid_refresh" style="padding: 8px;" href="./bells_list.html?t=&back=">管理</a>
         </div>
       </div>
 
@@ -339,6 +339,16 @@
       $(".delete_btn").css('display','block');
     }
 
+    if(location.search.indexOf("&back=") > -1){
+      $(".clock_console_back").css('display', 'flex');
+      $(".clock_console_back").click(function(){
+        history.back();
+        // location.href = './index.html';
+      });
+    }
+
+    get_bells_audio_list();
+
     let urlParams = get_url_params();
     if('title' in urlParams && urlParams['title'].length > 0){
       get_alarm_info(urlParams['title']);
@@ -412,7 +422,15 @@
     }
 
 
+    var alarm_audio_options = $("#alarm_audio > option");
 
+    for(var i = 0 ; i < alarm_audio_options.length; i++){
+      var alarm_audio_option = alarm_audio_options[i];
+      alarm_audio_option.selected = false;
+      if(alarm_audio_option.value == audio){
+        alarm_audio_option.selected = true;
+      }
+    }
 
   }
 
@@ -479,6 +497,33 @@
       }, 500);
 
     }
+  }
+
+  async function get_bells_audio_list(){
+    var ts = new Date().getTime();
+    var result = await fetch(domain + "/api/audio_list?t=" + ts, {
+      method: 'get',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      }
+    }).then((res) => res.text());
+    sync_bells_audio_list_to_dom(result);
+  }
+
+  async function sync_bells_audio_list_to_dom(audio_list){
+    console.log(audio_list);
+    var audio_list_arr = audio_list.split("\n");
+    $("#alarm_audio").html("");
+    if(audio_list_arr.length > 0){
+      for(var i = 0; i < audio_list_arr.length; i++) {
+        var audio_item = audio_list_arr[i];
+        var audio_item_arr = audio_item.split("\t");
+        $("#alarm_audio").append(`<option value="${audio_item_arr[2]}">${audio_item_arr[1]}</option>`);
+      }
+    }else{
+      $("#alarm_audio").append(`<option value="">无铃声</option>`);
+    }
+
   }
 
   function formatDate(date, format){

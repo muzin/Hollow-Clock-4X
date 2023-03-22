@@ -26,7 +26,7 @@
 //#include "AudioOutputI2SNoDAC.h"
 #include "AudioOutputI2S.h"
 
-#define FIRMWARE_VERSION 10101
+#define FIRMWARE_VERSION 10102
 
 // 悬浮时钟 开启 debug 日志 在最终版本中注释掉
 #define HOLLOW_CLOCK_DEBUG
@@ -45,13 +45,12 @@
 #define STEPPER_D_PIN 19  // GPIO19
 
 #define BAT_ADC_PIN 35
-#define BAT_VOLTAGE_MAX 4.2
+#define BAT_VOLTAGE_MAX 3.7
 
 // 步进电机每一步delay时长 单位：ms
 #define STEPPER_DELAY_TIME 2
 // wifi ap 名称
 #define WIFI_AP_NAME "Hollow_Clock_4X_"
-// #define WIFI_AP_PASSWD "hollow_clock_4x"
 #define WIFI_AP_PASSWD "12345678"
 #define WIFI_AP_IP 192, 168, 4, 1
 
@@ -128,7 +127,7 @@ uint32_t get_esp_chipid() {
 
 Ticker ticker1ms;       // 1ms 定时器
 Ticker ticker1000ms;    // 1s 定时器
-Ticker ticker20000ms;   // 10s 定时器
+Ticker ticker20000ms;   // 20s 定时器
 Ticker ticker60000ms;   // 1分钟 定时器
 Ticker ticker300000ms;  // 5分钟 定时器
 
@@ -185,9 +184,14 @@ volatile unsigned long minute_in_lock = 0;
 // 停止按钮中断 锁 记录上次触发时间
 volatile unsigned long stop_btn_lock = 0;
 
+// 停止按钮 是否长按。记录按下的 毫秒数 
+volatile long stop_btn_long_press = -1;
+
 // 6点触发中断 是否激活
 volatile unsigned long hour_in_enable = 0;
 volatile unsigned long minute_in_enable = 0;
+
+
 
 
 // 建立网络服务器对象，该对象用于响应HTTP请求。监听端口（80）
@@ -266,6 +270,7 @@ String spk_eat = "/rings/tip/eat.mp3";
 
 String bells_prefix = "/bells";
 String bells_list_info = bells_prefix + "/list.txt";
+String bells_audio_list_info = bells_prefix + "/audio_list.txt";
 
 int chime_idx_list[20];
 volatile int chime_len = 0;
@@ -277,6 +282,11 @@ volatile int chime_handling = false;
 // 报时 列表
 uint8_t chime_list[24][2] = { -1 };
 int chime_list_len = 0;
+
+
+// 音频铃声列表 
+String bells_audio_list[50][2] = {"", ""};
+int bells_audio_list_len = 0;
 
 // =========================================
 // define function
@@ -1133,6 +1143,11 @@ void ICACHE_RAM_ATTR stop_btn_interrupt() {
   stop_btn_lock = current_millis;
   Serial_Loginfo("触发 停止按钮 中断.");
 
+  // 如果stop_btn 没有激活长按
+  if(stop_btn_long_press == -1){
+    stop_btn_long_press = 0;
+  }
+
 
   // 检查是否在这个播放 音频如果有立刻打断
 
@@ -1142,6 +1157,15 @@ void ICACHE_RAM_ATTR stop_btn_interrupt() {
     audio_is_running = false;
   }
 
+
+}
+
+void stop_btn_long_press_10s(){
+   Serial_Loginfo("触发 停止按钮 10s 长按.");
+
+  // 移除 ap 账号密码
+  remove_sys_value_to_spiffs("wifi_ap_name");
+  remove_sys_value_to_spiffs("wifi_ap_passwd");
 
 }
 
@@ -1313,6 +1337,23 @@ void timer_1000ms_handler() {
   if (bellManager != NULL) {
     bellManager->bell_handler();
   }
+
+  // 如果stop 长按激活, 每秒增加1000
+  // Serial_Loginfo(String("stop 长按激活 check\t") + String(stop_btn_long_press));
+  if(stop_btn_long_press > -1){
+    int stop_btn_status = digitalRead(STOP_BUTTON_PIN);
+
+    Serial_Loginfo(String("stop_btn_status check\t") + stop_btn_status);
+    if(stop_btn_status == LOW){
+      stop_btn_long_press += 1000;
+      if(stop_btn_long_press >= 10 * 1000){
+        stop_btn_long_press_10s();
+        stop_btn_long_press = -1;
+      }
+    }else{
+      stop_btn_long_press = -1;
+    }
+  }
 }
 
 void timer_20000ms_handler() {
@@ -1339,6 +1380,7 @@ void timer_60000ms_handler() {
   // 获取 当前 电池的电压，如果低于 3v说明快没电了
   float crt_voltage = get_battery_voltage();
   Serial_Loginfo(String("current voltage:") + crt_voltage + "V");
+
   // if(crt_voltage < 3){
   //   start_audio(spk_hungry.c_str());
   // }
@@ -1674,6 +1716,7 @@ void start_audio(const char *url) {
 
     // 如果文件未找到
     if (!file->isOpen()) {
+      Serial_Loginfo("Not Found Audio File");
       start_audio(spk_not_found_audio.c_str());
       delete file;
       file = nullptr;
@@ -1703,6 +1746,7 @@ void start_audio(const char *url) {
     // 播放 未知音频类型
 
     Serial_Loginfo("Unkown Audio Type");
+    return;
   }
 
   // out = new AudioOutputI2S();
@@ -2591,6 +2635,293 @@ void httpd_handler_toggle_enable(){
 
 }
 
+File fsUploadFile;
+String fsUploadFileName;
+String fsUploadFilePath;
+
+
+void httpd_handler_add_audio(){
+  String title = httpd_server.arg("title");
+  String path = httpd_server.arg("path");
+
+  Serial.println("File title: " + title); // 通过串口监视器输出上传文件的名称
+  Serial.println("File path: " + path); // 通过串口监视器输出上传文件的名称
+
+  if(path.length() > 0){
+
+    fsUploadFilePath = path;
+    write_bell_audio_to_memory(title, fsUploadFilePath);
+    write_bell_audio_to_spiffs();
+
+    httpd_server.send(
+      200,
+      "text/html;charset=utf-8",
+      "<h1>上传成功</h1><script>setTimeout(function(){ history.back(); },1000);</script>"
+    );
+
+  }else{
+    HTTPUpload &upload = httpd_server.upload();
+  
+    if (upload.status == UPLOAD_FILE_START) { // 如果上传状态为UPLOAD_FILE_START
+      Serial.println("upload start."); 
+
+      String filename = upload.filename; // 建立字符串变量用于存放上传文件名
+      // if (!filename.startsWith("/"))
+      //     filename = "/" + filename;            // 为上传文件名前加上"/"
+      Serial.println("File Name: " + filename); // 通过串口监视器输出上传文件的名称
+
+      fsUploadFileName = filename;
+
+      int bell_audio_idx = generate_bell_audio_idx(fsUploadFileName);
+
+      fsUploadFilePath = String("/audio/") + bell_audio_idx + ".mp3";
+
+      fsUploadFile = SPIFFS.open(fsUploadFilePath, "w"); // 在SPIFFS中建立文件用于写入用户上传的文件数据
+    } else if (upload.status == UPLOAD_FILE_WRITE) { // 如果上传状态为UPLOAD_FILE_WRITE
+      Serial.println("upload write."); 
+      if (fsUploadFile){
+          fsUploadFile.write(upload.buf, upload.currentSize); // 向SPIFFS文件写入浏览器发来的文件数据
+      }
+    } else if (upload.status == UPLOAD_FILE_END) { // 如果上传状态为UPLOAD_FILE_END
+      Serial.println("upload end."); 
+      if (fsUploadFile) {                                                           // 如果文件成功建立
+          fsUploadFile.close();                                   // 将文件关闭
+          Serial.println(" Size: " + upload.totalSize);           // 通过串口监视器输出文件大小
+          httpd_server.send(
+            200,
+            "text/html;charset=utf-8",
+            "<h1>上传成功</h1><script>setTimeout(function(){ history.back(); },1000);</script>"
+          );
+
+          write_bell_audio_to_memory(fsUploadFileName, fsUploadFilePath);
+          write_bell_audio_to_spiffs();
+          
+      } else {                                                                        // 如果文件未能成功建立
+          Serial.println("File upload failed");                                // 通过串口监视器输出报错信息
+          httpd_server.send(
+            200,
+            "text/html;charset=utf-8",
+            "<h1>500: couldn't create file</h1>"
+          );
+      }
+    }    
+  }
+
+  
+
+}
+
+void httpd_handler_remove_audio(){
+  String title = httpd_server.arg("title");
+
+  String audio_path = "";
+  int idx = -1;
+
+  for(int i = 0; i < bells_audio_list_len; i++){
+    if(bells_audio_list[i][0] == title){
+      audio_path = bells_audio_list[i][1];
+      idx = i;
+      break;
+    }
+  }
+
+  if(audio_path.length() > 0){
+    bool ishttp = audio_path.startsWith("http://");
+
+    if(!ishttp){
+      SPIFFS.remove(audio_path);
+    }
+
+    if(idx > -1){
+      for(int i = idx; i < bells_audio_list_len; i++){
+        if(i == bells_audio_list_len - 1){
+          bells_audio_list[i][0] = "";
+          bells_audio_list[i][1] = "";
+        }else{
+          bells_audio_list[i][0] = bells_audio_list[i+1][0];
+          bells_audio_list[i][1] = bells_audio_list[i+1][1];
+        } 
+      }
+
+      bells_audio_list_len--;
+
+    }
+
+    write_bell_audio_to_spiffs();
+
+  }
+  
+  httpd_server.send(
+    200,
+    "text/plain;charset=utf-8",
+    "OK"
+  );
+}
+
+int generate_bell_audio_idx(String title) {
+  String key = "gen_audio_idx";
+  String idx_str = get_sys_value_to_spiffs(key);
+  if(idx_str.length() > 0){
+    int val = idx_str.toInt()+1;
+    set_sys_value_to_spiffs(key, String(val));    
+    return val;
+  }else{
+    int val = 10;
+    set_sys_value_to_spiffs(key, String(val));    
+    return val;
+  }
+}
+
+void write_bell_audio_to_memory(String title, String path) {
+  int idx = -1;
+
+  String audio_path = String(path);
+
+  for(int i = 0; i < bells_audio_list_len; i++){
+    if(bells_audio_list[i][0] == title){
+      idx = i;
+      break;
+    }
+  }
+
+  bool ishttps = audio_path.startsWith("https://");
+
+  if(ishttps){
+    audio_path.replace("https://", "http://");
+  }
+
+  // 已经存在
+  if(idx > -1){
+    bells_audio_list[idx][1] = audio_path;
+  }else{
+    bells_audio_list[bells_audio_list_len][0] = title;
+    bells_audio_list[bells_audio_list_len][1] = audio_path;
+    bells_audio_list_len++;
+  }
+}
+
+void write_bell_audio_to_spiffs() {
+  File file = SPIFFS.open(bells_audio_list_info, "w");   
+
+    for(int i = 0; i < bells_audio_list_len; i++){
+      String idx_str = String(i);
+      file.write((uint8_t *)idx_str.c_str(), idx_str.length());
+      file.write((uint8_t *)"\t", 1);
+      file.write((uint8_t *)bells_audio_list[i][0].c_str(), bells_audio_list[i][0].length());
+      file.write((uint8_t *)"\t", 1);
+      file.write((uint8_t *)bells_audio_list[i][1].c_str(), bells_audio_list[i][1].length());
+      if(i < bells_audio_list_len - 1){
+        file.write((uint8_t *)"\n", 1);        
+      }
+    }
+    file.flush();
+    
+    file.close();
+}
+
+void load_audio_config_to_memory(){
+
+  if (SPIFFS.exists(bells_audio_list_info)) {
+
+    File bells_audio_list_info_file = SPIFFS.open(bells_audio_list_info, "r");
+
+    String cont = bells_audio_list_info_file.readString();
+
+    Serial_Loginfo("load_bells_audio_config_from_spiffs list.txt content:");
+    Serial_Loginfo(cont.c_str());
+
+    int bells_titles_num = 0;
+
+    int last_idx = 0;
+    int str_idx = 0;
+
+    if(cont.indexOf("\n", last_idx) == -1){
+      if(cont.length() > 0){
+        load_bells_audio_item_from_spiffs(cont.c_str());
+      }
+    }else{
+      while ((str_idx = cont.indexOf("\n", last_idx)) > -1) {
+        String title_item = cont.substring(last_idx, str_idx);
+
+        Serial_Loginfo(String("title_item") + title_item);
+
+        load_bells_audio_item_from_spiffs(title_item.c_str());
+
+        last_idx = str_idx + 1;
+        bells_titles_num++;
+      }
+
+      Serial_Loginfo(String("last_idx ") + last_idx);
+      String title_item = cont.substring(last_idx, cont.length());
+      Serial_Loginfo(String("title_item ") + title_item);
+      load_bells_audio_item_from_spiffs(title_item.c_str());
+
+    }
+    bells_audio_list_info_file.close();
+  }else{
+    Serial_Loginfo("load_bells_config_from_spiffs list.txt not exists");
+  }
+
+}
+
+void load_bells_audio_item_from_spiffs(String bell_audio_item){
+
+    String cont = bell_audio_item;
+    int last_idx = 0;
+    int str_idx = 0;
+    int bells_info_num = 0;
+
+    int idx = -1;
+    String title = "";
+
+    while ((str_idx = cont.indexOf("\t", last_idx)) > -1) {
+      String cont_item = cont.substring(last_idx, str_idx);
+
+      if (bells_info_num == 0) {
+        idx = cont_item.toInt();
+      }
+      if (bells_info_num == 1) {
+        title = String(cont_item);
+      }
+      
+      last_idx = str_idx + 1;
+      bells_info_num++;
+    }
+
+    String bells_audio_path_str = cont.substring(last_idx, cont.length());
+
+
+  if (title.length() > 0 && bells_audio_path_str.length() > 0) {
+    bells_audio_list[idx][0] = title;
+    bells_audio_list[idx][1] = bells_audio_path_str;
+
+    bells_audio_list_len++;
+
+    Serial_Loginfo(String("load_bells_audio_item_from_spiffs add bell: ") + title);
+  }
+ 
+}
+
+void httpd_handler_audio_list(){
+
+  if(!SPIFFS.exists(bells_audio_list_info)){
+    httpd_server.send(
+      200,
+      "text/plain;charset=utf-8",
+      ""
+    );
+    return;
+  }
+
+  File file = SPIFFS.open(bells_audio_list_info, "r");
+  String cont = file.readString();
+  httpd_server.send(
+    200,
+    "text/plain;charset=utf-8",
+    cont
+  );
+  file.close();
+}
 
 // 处理用户浏览器的HTTP访问
 void httpd_handler_other() {
@@ -2748,9 +3079,10 @@ void setup_httpd() {
   httpd_server.on("/api/toggle_enable", httpd_handler_toggle_enable);
 
 
-  httpd_server.on("/api/add_audio", httpd_handler_save_alarm);
-  httpd_server.on("/api/delete_audio", httpd_handler_delete_alarm);
-  httpd_server.on("/api/audio_list", httpd_handler_alarm_list);
+  httpd_server.on("/api/add_audio", HTTP_POST, respondOK_for_add_audio, httpd_handler_add_audio);
+  httpd_server.on("/api/add_audio_path", respondOK_for_add_audio);
+  httpd_server.on("/api/delete_audio", httpd_handler_remove_audio);
+  httpd_server.on("/api/audio_list", httpd_handler_audio_list);
 
   // httpd_server.on("/upload.html",                    // 如果客户端通过upload页面
   //                   HTTP_POST,                         // 向服务器发送文件(请求方法POST)
@@ -2765,6 +3097,28 @@ void setup_httpd() {
   httpd_server.begin();  // 启动网站服务
 
   Serial_Loginfo("HTTP server started");
+}
+
+void respondOK_for_add_audio(){
+ String title = httpd_server.arg("title");
+  String path = httpd_server.arg("path");
+
+  Serial.println("File title: " + title); // 通过串口监视器输出上传文件的名称
+  Serial.println("File path: " + path); // 通过串口监视器输出上传文件的名称
+
+  if(path.length() > 0){
+
+    fsUploadFilePath = path;
+    write_bell_audio_to_memory(title, fsUploadFilePath);
+    write_bell_audio_to_spiffs();
+
+    httpd_server.send(
+      200,
+      "text/html;charset=utf-8",
+      "OK"
+    );
+
+  }
 }
 
 void httpd_set_header_cros() {
@@ -3080,6 +3434,10 @@ void birthday_handler() {
   int minute = get_minutes_from_current_timestamp();
   int seconds = get_seconds_from_current_timestamp();
 
+  if(birthday == -1){ 
+    return;
+  }
+
   int birthday_month = get_month_from_timestamp((time_t *)&birthday);
   int birthday_month_day = get_month_day_from_timestamp((time_t *)&birthday);
   int birthday_hour = get_hour_from_timestamp((time_t *)&birthday);
@@ -3101,8 +3459,11 @@ void setup_bells() {
   bellManager = new BellManager();
 
   Serial_Loginfo("Load bells config from spiffs");
-  // 从 spiffs 中 获取 bell配置信息
+  // 从 spiffs 中 获取 bell 配置信息
   load_bells_config_from_spiffs();
+
+  // 从 spiffs 中 获取 bell audio 配置信息
+  load_audio_config_to_memory();
 }
 
 

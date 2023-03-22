@@ -2,6 +2,8 @@
 /init.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/init.html
 /spiffs.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/spiffs.html
 /alarm.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/alarm.html
+/alarm_update.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/alarm_update.html
+/bells_list.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/bells_list.html
 /css/bootstrap.min.css http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/css/bootstrap.min.css
 /js/bootstrap.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/bootstrap.min.js
 /js/jquery.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/jquery.min.js

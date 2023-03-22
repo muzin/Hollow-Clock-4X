@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+  <title>Hollow Clock 4X</title>
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+
+
+  <style type="text/css">
+    .clock_console_warpper {
+      /*padding:5px;*/
+    }
+    .clock_console_title {
+      /*background-color: #2663f6;*/
+      background-color: #6540f0;
+      color: #fff;
+      width:100%;
+      height: 60px;
+      font-size: 23px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      top: 0px;
+    }
+    .clock_console_title > span {
+      color: #fff;
+    }
+
+    .clock_console_items{
+      display: flex;
+      height: 100%;
+      width: 100%;
+      flex-direction: column;
+      margin-top: 60px;
+    }
+
+    .item_title {
+      background: #eee;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding-left: 5px;
+      font-weight: bold;
+    }
+
+    .wifi_ssid_wrapper, .wifi_pwd_wrapper{
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 10px 10px;
+    }
+
+    .item_title_name{
+      padding: 0px 10px;
+      width: 33%;
+    }
+
+    .wifi_ssid_select{
+      display: flex;
+      width: 50%;
+    }
+
+    .wifi_ssid_val {
+      width: 67.77777%;
+    }
+    .set_clock_time_btn_wrapper{
+      display: flex;
+      justify-content: center;
+      height: 80px;
+      align-items: center;
+    }
+
+    .wifi_ssid_refresh {
+      height: 34px;
+      margin-left: 10px;
+      font-size: 14px;
+      width: 30% !important;
+    }
+
+    .storage_wrapper, .gain_wrapper {
+      width: 100%;
+      height: 20px;
+      background: #eee;
+      border-radius: 5px;
+    }
+
+    .storage_process, .gain_process{
+      width: 0%;
+      height: 20px;
+      background: #6540f0;
+      border-radius: 5px;
+      transition: width 0.5s ease 0s;
+    }
+
+
+
+
+    .update_wifi_btn_wrapper {
+      display: none;
+    }
+
+    .clock_btn {
+      width: 40%;
+      text-align: center;
+      background: #6540f0;
+      color: #fff;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .clock_btn:active {
+      color: #fff;
+    }
+    .clock_btn:hover, .clock_btn:focus-within {
+      color: #fff;
+      text-decoration-line: none;
+    }
+
+    .tip {
+      color:#aaa;width:100%; padding: 5px 10px;
+    }
+
+    .gain_btn {
+      width: 35px;
+      height: 35px;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      background: #eee;
+      border-radius: 5px;
+    }
+
+    .clock_console_back {
+      height: 60px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      /*display: flex;*/
+      width: 45px;
+      justify-content: center;
+      align-items: center;
+      display: none;
+    }
+
+    .clock_console_back > img {
+      width: 40px;
+      height: 40px;
+    }
+
+    .delete_btn {
+      background: #eee;
+      color: #f13;
+      /*display: none;*/
+    }
+
+    .loading_wrapper{
+      /*display: flex;*/
+      display:none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      background-color: #333;
+      opacity: 0.8;
+      /* display: none; */
+      justify-content: center;
+      align-items: center;
+      transition: width 0.5s ease 0s;
+    }
+    .loading_text {
+      color: #fff;
+      font-size: 16px;
+    }
+
+
+  </style>
+</head>
+<body>
+
+<div class="clock_console_warpper">
+
+  <div class="clock_console_title">
+    <span> Hollow Clock 4X </span>
+
+    <div class="clock_console_back">
+      <img src="./svg/back.svg"/>
+    </div>
+  </div>
+
+
+  <div class="clock_console_items">
+
+    <div id="audio_list" class="clock_console_item">
+
+
+
+    </div>
+
+    <div class="set_clock_time_btn_wrapper" style="justify-content: space-around;">
+      <a id="file_upload_btn" class="save_setting_btn alarm_submit_btn clock_btn" href="javascript:void(0);">
+        上传
+      </a>
+    </div>
+
+    <form id="file_form_ele" name="file_form" method="POST" enctype="multipart/form-data" onsubmit="javascript:void(0);">
+      <input id="file_upload_ele" name="file" accept="audio/*" type="file" style="display:none;"/>
+      <input id="file_upload_submit_btn" type="submit" style="display:none;"/>
+    </form>
+
+
+  </div>
+
+
+  <div class="loading_wrapper">
+    <div class="loading_text">
+      Loading...
+    </div>
+  </div>
+
+</div>
+
+
+<!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+<script src="./js/jquery.min.js"></script>
+<!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+<script src="./js/bootstrap.min.js"></script>
+
+<script type="application/javascript">
+
+  var domain = "http://192.168.1.13";
+  // var domain = "."
+
+  function open_loading(msg){
+    $(".loading_wrapper").css('display', 'flex');
+    if(msg != null){
+      $(".loading_text").text(msg);
+    }else{
+      $(".loading_text").text("Loading...");
+    }
+  }
+
+  function close_loading(){
+    $(".loading_wrapper").css('display', 'none');
+  }
+
+  $(document).ready(function() {
+
+
+    $("#file_upload_btn").click(function(){
+
+      var is_network_addr = confirm("是否上传网络地址?")
+
+      if(is_network_addr){
+        var val = prompt("请输入音频的网络地址：", "");
+
+        if(val.trim().length == 0){
+          alert('请输入正确的mp3文件');
+          return;
+        }
+        if(!val.endsWith(".mp3")){
+          alert('必须为mp3文件');
+          return;
+        }
+        console.log(val);
+        add_audio(val);
+      }else{
+        $("#file_upload_ele").click();
+      }
+    });
+
+    $("#file_upload_ele").change(function(){
+      console.log(arguments);
+
+      $("#file_form_ele").submit();
+    });
+
+    $("#file_form_ele").attr('action', domain + "/api/add_audio");
+
+    $("#file_form_ele").submit(function(evt){
+      // evt.preventDefault();
+
+      console.log(arguments);
+
+      // return true;
+    });
+
+    if(location.search.indexOf("&back=") > -1){
+      $(".clock_console_back").css('display', 'flex');
+      $(".clock_console_back").click(function(){
+        history.back();
+      });
+    }
+
+    get_bells_audio_list();
+
+  });
+
+  function get_url_params(){
+    var str = location.search.substr(1);
+    var str_arr = str.split("&");
+    var ret = str_arr.map((i)=>{
+      var i_arr = i.split("=");
+      var key = "";
+      var val = "";
+      if(i_arr.length > 0){
+        key = i_arr[0];
+      }
+      if(i_arr.length > 1){
+        val = i_arr[1];
+      }
+      return {key, val};
+    }).reduce((c, item, idx)=>{
+      c[item.key] = item.val;
+      return c;
+    }, {});
+    return ret;
+  }
+
+  async function get_bells_audio_list(){
+    var ts = new Date().getTime();
+    var result = await fetch(domain + "/api/audio_list?t=" + ts, {
+      method: 'get',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      }
+    }).then((res) => res.text());
+    sync_bells_audio_list_to_dom(result);
+  }
+
+  async function remove_bells_audio(title){
+    var ts = new Date().getTime();
+    var result = await fetch(domain + "/api/delete_audio?title=" + title + "&t=" + ts, {
+      method: 'get',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      }
+    }).then((res) => res.text());
+    alert(result);
+    if(result == "OK"){
+      location.href = location.href;
+    }
+  }
+
+  function sync_bells_audio_list_to_dom(audio_list){
+
+    console.log(audio_list);
+
+    audio_list = audio_list.trim();
+
+    if(audio_list.length == 0){return;}
+
+    var audio_list_arr = audio_list.split("\n");
+
+    for(var i = 0; i < audio_list_arr.length; i++){
+      var audio_item = audio_list_arr[i];
+
+      var audio_item_arr = audio_item.split("\t");
+
+
+      $("#audio_list").append(`<div class="wifi_ssid_wrapper">
+        <div class="wifi_ssid_title item_title_name" style="width:80%">
+          ${audio_item_arr[1]}
+        </div>
+        <div class="wifi_ssid_select" style="width: 20%;">
+          <a class="clock_btn audio_manager_btn delete_btn alarm_delete_btn wifi_ssid_refresh" onclick="remove_bells_audio('${audio_item_arr[1]}')" style="width: 100% !important;padding: 8px;">删除</a>
+        </div>
+      </div>`);
+
+
+    }
+  }
+
+  async function add_audio(mp3_path){
+
+    if(!mp3_path.endsWith(".mp3")){
+      alert("必须为mp3文件");
+      return;
+    }
+
+    if(mp3_path.startsWith("https://")){
+      mp3_path = mp3_path.replace("https://", "http://");
+    }
+
+    var mp3_name = mp3_path.substring(mp3_path.lastIndexOf("/") + 1);
+
+    var result = await fetch(domain + "/api/add_audio_path?title=" + mp3_name + "&path=" + mp3_path, {
+      method: 'get',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      }
+    }).then((res) => res.text());
+    alert(result);
+    if(result == "OK"){
+      location.href = location.href;
+    }
+  }
+
+
+  function formatDate(date, format){
+    var d = null;
+
+    if(typeof date == 'string'){
+      try {
+        d = new Date(date);
+        if(d.toString() == 'Invalid Date'){
+          throw 'datetime is Invalid Date';
+        }
+      }catch(e){
+        console.error(e);
+        d = null;
+      }
+    }else if(date instanceof Date){
+      d = date;
+    }else{
+    }
+
+    if(d == null){
+      return '';
+    }
+
+    var _year = d.getFullYear();
+    var _month = d.getMonth() + 1;
+    var _date = d.getDate();
+
+    var _day = d.getDay();
+
+    var _hours = d.getHours();
+    var _minutes = d.getMinutes();
+    var _seconds = d.getSeconds();
+    var _mseconds = d.getMilliseconds();
+
+    var formatClone = format;
+    return formatClone
+            .replace(/yyyy/g, _year)
+            .replace(/MM/g, _month > 9 ? _month : '0' + _month)
+            .replace(/dd/g, _date > 9 ? _date : '0' + _date)
+            .replace(/hh/g, _hours > 9 ? _hours : '0' + _hours)
+            .replace(/mm/g, _minutes > 9 ? _minutes : '0' + _minutes)
+            .replace(/ss/g, _seconds > 9 ? _seconds : '0' + _seconds)
+            .replace(/ms/g, _mseconds > 9
+                    ? _mseconds > 99
+                            ? _mseconds
+                            : '0' + _mseconds
+                    : '00' + _mseconds);
+  }
+
+</script>
+</body>
+</html>
