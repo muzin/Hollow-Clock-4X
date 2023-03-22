@@ -4,12 +4,13 @@
 /alarm.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/alarm.html
 /alarm_update.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/alarm_update.html
 /bells_list.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/bells_list.html
+/settings.html http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/settings.html
 /css/bootstrap.min.css http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/css/bootstrap.min.css
 /js/bootstrap.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/bootstrap.min.js
 /js/jquery.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/jquery.min.js
-/js/jquery.min.js http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/js/jquery.min.js
 /favicon.ico http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/favicon.ico
 /svg/add.svg http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/svg/add.svg
+/svg/back.svg http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/svg/back.svg
 /svg/setting.svg http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/web_console/svg/setting.svg
 
 

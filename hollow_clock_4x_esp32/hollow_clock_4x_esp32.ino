@@ -3025,6 +3025,8 @@ String getContentType(String filename) {
     return "application/x-zip";
   else if (filename.endsWith(".gz"))
     return "application/x-gzip";
+  else if (filename.endsWith(".svg"))
+    return "image/svg+xml";
   return "text/plain";
 }
 
