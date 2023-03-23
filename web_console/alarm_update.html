@@ -512,13 +512,20 @@
 
   async function sync_bells_audio_list_to_dom(audio_list){
     console.log(audio_list);
-    var audio_list_arr = audio_list.split("\n");
-    $("#alarm_audio").html("");
-    if(audio_list_arr.length > 0){
-      for(var i = 0; i < audio_list_arr.length; i++) {
-        var audio_item = audio_list_arr[i];
-        var audio_item_arr = audio_item.split("\t");
-        $("#alarm_audio").append(`<option value="${audio_item_arr[2]}">${audio_item_arr[1]}</option>`);
+
+    audio_list = audio_list.trim();
+
+    if(audio_list.length > 0){
+      var audio_list_arr = audio_list.split("\n");
+      $("#alarm_audio").html("");
+      if(audio_list_arr.length > 0){
+        for(var i = 0; i < audio_list_arr.length; i++) {
+          var audio_item = audio_list_arr[i];
+          var audio_item_arr = audio_item.split("\t");
+          $("#alarm_audio").append(`<option value="${audio_item_arr[2]}">${audio_item_arr[1]}</option>`);
+        }
+      }else{
+        $("#alarm_audio").append(`<option value="">无铃声</option>`);
       }
     }else{
       $("#alarm_audio").append(`<option value="">无铃声</option>`);
