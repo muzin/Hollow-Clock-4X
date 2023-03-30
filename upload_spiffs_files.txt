@@ -43,7 +43,6 @@
 /rings/tip/hungry.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/tip/hungry.mp3
 /rings/tip/eat.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/tip/eat.mp3
 
-/rings/bells/didi.mp3 http://mithub.oss-cn-beijing.aliyuncs.com/data/hollow_clock/rings/bells/didi.mp3
 
 
 

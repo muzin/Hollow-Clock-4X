@@ -26,7 +26,7 @@
 //#include "AudioOutputI2SNoDAC.h"
 #include "AudioOutputI2S.h"
 
-#define FIRMWARE_VERSION 10102
+#define FIRMWARE_VERSION 10103
 
 // 悬浮时钟 开启 debug 日志 在最终版本中注释掉
 #define HOLLOW_CLOCK_DEBUG
@@ -1180,75 +1180,7 @@ void ICACHE_RAM_ATTR hour_in_interrupt() {
   // 检查是否6点报告给主程序
 
 
-  // 如果初始化过， 且 一小时内 再次 触发跳过
-  if (proof_time_inited && current_millis - hour_in_lock < CLOCK_ZERO_POS_INTERVAL_MAX && current_millis - hour_in_lock > 0) {
-    Serial_Loginfo("自动对时已初始化, 跳过");
-    return;
-  }
-
-
-
-  // 如果正在对时， 计算 时间偏差，计算需要走的步数， 开始对时
-
-  // current_millis
-
-  // current_timestamp
-
-  // 获取 时分，计算 距离 6点 的位置，6点 到 12点之间， 正转， 0点到6点之间， 反转
-  // STEPS_PER_ROTATION / 60    秒需要转的步数
-
-  // 计算 需要转的圈数 如果 大于 12点 时 减 12 小时
-  // 先 停止掉 步进电机
-
-  Serial_Loginfo("停掉 步进电机");
-  stepper->stop();
-
-
-  Serial_Loginfo("计算 偏移量");
-
-  int hours = get_hours_from_current_timestamp();
-  int minutes = get_minutes_from_current_timestamp();
-  int seconds = get_seconds_from_current_timestamp();
-
-  // 转为 12小时制
-  hours = hours >= 12 ? hours - 12 : hours;
-
-  int pos_point_time = 6;
-
-  // 小时 间隔
-  int hours_range = hours - pos_point_time;
-
-  Serial_Loginfo("current time:  " + String(hours) + ":" + String(minutes) + ":" + String(seconds));
-
-  int tmp_step = 0;
-  //  6点 到 12点之间 正转 指定的 圈数
-  if (hours_range >= 0) {
-    tmp_step = STEPS_PER_ROTATION * hours_range + ((STEPS_PER_ROTATION / 60) * minutes) + ((STEPS_PER_ROTATION / 60 / 60) * seconds);
-
-    Serial_Loginfo("6点 到 12点之间 正转 " + String(hours_range) + " " + String(minutes) + " " + String(seconds) + " steps:" + String(tmp_step));
-    Serial_Loginfo("目标时间: " + String(hours) + ":" + String(minutes) + ":" + String(seconds));
-
-  } else {
-
-    hours_range = -hours_range;
-
-    int pos_seconds = (60 - seconds) % 60;
-
-    int pos_minutes = pos_seconds > 0
-                        ? (60 - minutes - 1) % 60
-                        : (60 - minutes) % 60;
-
-    int pos_hours = pos_point_time - hours - 1;
-
-    tmp_step = STEPS_PER_ROTATION * pos_hours + ((STEPS_PER_ROTATION / 60) * pos_minutes) + ((STEPS_PER_ROTATION / 60 / 60) * pos_seconds);
-
-    tmp_step = -tmp_step;
-
-    Serial_Loginfo("0点 到 6点之间 反转 " + String(pos_hours) + " " + String(pos_minutes) + " " + String(pos_seconds) + " steps:" + String(tmp_step));
-    Serial_Loginfo("目标时间: " + String(hours) + ":" + String(minutes) + ":" + String(seconds));
-  }
-
-  stepper->rotateAsync(tmp_step, prood_time_after);
+  
 }
 
 // 当 触发 整点 时，执行此中断处理
@@ -1296,19 +1228,92 @@ void timer_2ms_handler() {
   // Serial_Loginfo("1ms end");
 
   // 如果 6点 整
-  // if(is_hour_in_enable() && is_minute_in_enable()){
-  //   hollow_clock_zero_pos_notify();
-  // }
+  if(is_hour_in_enable() && is_minute_in_enable()){
+    hollow_clock_zero_pos_notify();
+  }
 }
 
 // 时钟 0 定位 点 通知
-// void hollow_clock_zero_pos_notify(){
+void hollow_clock_zero_pos_notify(){
 
-//   // 当 到达 6点整 如果 现在在自动校时， 获取当前时间，和计算6点到 当前时间的偏差 进行
+  // 当 到达 6点整 如果 现在在自动校时， 获取当前时间，和计算6点到 当前时间的偏差 进行
 
-//   Serial_Loginfo("hollow_clock_zero_pos_notify");
+  Serial_Loginfo("hollow_clock_zero_pos_notify");
 
-// }
+
+// 如果初始化过， 且 一小时内 再次 触发跳过
+  if (proof_time_inited && current_millis - hour_in_lock < CLOCK_ZERO_POS_INTERVAL_MAX && current_millis - hour_in_lock > 0) {
+    Serial_Loginfo("自动对时已初始化, 跳过");
+    return;
+  }
+
+
+
+  // 如果正在对时， 计算 时间偏差，计算需要走的步数， 开始对时
+
+  // current_millis
+
+  // current_timestamp
+
+  // 获取 时分，计算 距离 6点 的位置，6点 到 12点之间， 正转， 0点到6点之间， 反转
+  // STEPS_PER_ROTATION / 60    秒需要转的步数
+
+  // 计算 需要转的圈数 如果 大于 12点 时 减 12 小时
+  // 先 停止掉 步进电机
+
+  Serial_Loginfo("停掉 步进电机");
+  stepper->stop();
+
+
+  Serial_Loginfo("计算 偏移量");
+
+  int hours = get_hours_from_current_timestamp();
+  int minutes = get_minutes_from_current_timestamp();
+  int seconds = get_seconds_from_current_timestamp();
+
+  // 转为 12小时制
+  hours = hours >= 12 ? hours - 12 : hours;
+
+  int pos_point_time = 6;
+
+  // 小时 间隔
+  int hours_range = hours - pos_point_time;
+
+  Serial_Loginfo("current time:  " + String(hours) + ":" + String(minutes) + ":" + String(seconds));
+
+  int tmp_step = 0;
+  //  6点 到 12点之间 正转 指定的 圈数
+  if (hours_range >= 0) {
+    tmp_step = STEPS_PER_ROTATION * hours_range + ((STEPS_PER_ROTATION / 60) * minutes) + ((STEPS_PER_ROTATION / 60 / 60) * seconds);
+_
+    SerialLoginfo("6点 到 12点之间 正转 " + String(hours_range) + " " + String(minutes) + " " + String(seconds) + " steps:" + String(tmp_step));
+    Serial_Loginfo("目标时间: " + String(hours) + ":" + String(minutes) + ":" + String(seconds));
+
+  } else {
+
+    hours_range = -hours_range;
+
+    int pos_seconds = (60 - seconds) % 60;
+
+    int pos_minutes = pos_seconds > 0
+                        ? (60 - minutes - 1) % 60
+                        : (60 - minutes) % 60;
+
+    int pos_hours = pos_point_time - hours - 1;
+
+    tmp_step = STEPS_PER_ROTATION * pos_hours + ((STEPS_PER_ROTATION / 60) * pos_minutes) + ((STEPS_PER_ROTATION / 60 / 60) * pos_seconds);
+
+    tmp_step = -tmp_step;
+
+    Serial_Loginfo("0点 到 6点之间 反转 " + String(pos_hours) + " " + String(pos_minutes) + " " + String(pos_seconds) + " steps:" + String(tmp_step));
+    Serial_Loginfo("目标时间: " + String(hours) + ":" + String(minutes) + ":" + String(seconds));
+  }
+
+  stepper->rotateAsync(tmp_step, prood_time_after);
+
+  
+
+}
 
 
 
